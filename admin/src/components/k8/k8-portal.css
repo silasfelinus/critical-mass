@@ -135,6 +135,8 @@
 .k8-invite h2 { font-weight: 900; color: #ffe19d; }
 .k8-invite p { font-size: 0.7rem; line-height: 1.35; margin: 0.3rem 0; }
 .k8-invite form { display: grid; gap: 0.3rem; }
+.k8-invite .k8-dedicated { display:flex; align-items:center; gap:0.55rem; font-weight:700; line-height:1.35; }
+.k8-invite .k8-dedicated input { width:1.2rem; min-width:1.2rem; accent-color:#ffe39a; }
 .k8-invite input { padding: 0.4rem; margin-top: 0; font-size: 0.8rem; }
 .k8-invite label { margin-top: 0.5rem; }
 .k8-invite button, .k8-invite a {
