@@ -118,7 +118,10 @@ function AdminInvitation({ scope, onClose }) {
         <input id="k8-exchange" value={exchange} onChange={event => setExchange(event.target.value)} required />
         <label htmlFor="k8-pair">Fund pair</label>
         <input id="k8-pair" value={pair} onChange={event => setPair(event.target.value)} required />
-        <button type="submit" disabled={pending}>{pending ? 'Preparing…' : 'Create a one-time invitation'}</button>
+        <label className="k8-dedicated"><input type="checkbox" checked={dedicated} onChange={event => setDedicated(event.target.checked)} />
+          I confirm this fund is dedicated to K8. Changing its strategy must not affect anyone else's money.
+        </label>
+        <button type="submit" disabled={pending || !dedicated}>{pending ? 'Preparing…' : 'Create a one-time invitation'}</button>
       </form>
       {error && <p role="alert">{error}</p>}
       {link && (
