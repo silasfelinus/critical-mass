@@ -8,12 +8,10 @@ the trading engine, financial state, or the original reference photos.
 """
 import argparse
 import hashlib
-import io
 import json
 from pathlib import Path
 from zipfile import ZipFile
 
-from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 DESTINATION = ROOT / "admin" / "public" / "k8-animals"
@@ -38,16 +36,15 @@ def install(archive: Path, dry_run: bool = False):
         verified = []
         for name, dimensions in expected.items():
             raw = packet.read(name)
-            with Image.open(io.BytesIO(raw)) as image:
-                image.verify()
-            with Image.open(io.BytesIO(raw)) as image:
-                if image.format != "WEBP" or image.size != dimensions:
-                    raise ValueError(f"incorrect image format or dimensions: {name}")
+            if len(raw) < 16 or raw[:4] != b"RIFF" or raw[8:12] != b"WEBP":
+                raise ValueError(f"invalid WebP header: {name}")
             entry = next((a for a in manifest["assets"] if
                           name in (a["desktop"]["file"], a["tablet"]["file"], a["mobile"]["file"])), None)
             if entry is None:
                 raise ValueError(f"missing checksum entry for {name}")
             variant_key = "mobile" if name.startswith("mobile/") else "tablet" if name.startswith("tablet/") else "desktop"
+            if entry[variant_key]["size"] != list(dimensions):
+                raise ValueError(f"wrong declared dimensions: {name}")
             if hashlib.sha256(raw).hexdigest() != entry[variant_key]["sha256"]:
                 raise ValueError(f"hash mismatch: {name}")
             verified.append((name, raw))
