@@ -80,6 +80,7 @@ function AdminInvitation({ scope, onClose }) {
   const [exchange, setExchange] = useState(scope?.exchange || query.get('exchange') || 'coinbase')
   const [pair, setPair] = useState(scope?.pair || query.get('pair') || 'BTC-USDC')
   const [recipient, setRecipient] = useState('')
+  const [dedicated, setDedicated] = useState(false)
   const [link, setLink] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [error, setError] = useState('')
