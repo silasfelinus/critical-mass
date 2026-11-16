@@ -60,6 +60,7 @@ const { createSentinelService } = require('./src/sentinel/sentinel-service');
 const { getSentinelConfig, updateSentinelConfig } = require('./src/config-utils');
 const { createRuntimeHealthMonitor } = require('./src/runtime-health');
 const { createOperatorAuth } = require('./src/operator-auth');
+const { createK8Auth } = require('./src/k8-auth');
 const { resolveListenHosts, createCorsMiddleware, createSecurityHeadersMiddleware, bindGatewayListeners, watchTailscaleListeners } = require('./src/gateway-listen');
 const { registerProcessGuards } = require('./src/process-guard');
 const { resolveIpcPort } = require('./src/ipc-port-defaults');
@@ -107,6 +108,12 @@ const operatorAuth = createOperatorAuth({
   onPasswordRemoved: () => {
     setTimeout(() => gracefulShutdown('operator password removal'), 100).unref();
   },
+});
+const k8Auth = createK8Auth({
+  authFile: path.join(DATA_DIR, 'k8-auth.json'),
+  readJSON,
+  writeJSON,
+  operatorAuth,
 });
 const ALLOW_REMOTE_LISTEN = operatorAuth.hasPassword() || operatorAuth.hasRemoteBootstrap();
 const LISTEN_HOSTS = resolveListenHosts(process.env.HOST, undefined, { allowRemote: ALLOW_REMOTE_LISTEN });
@@ -201,7 +208,13 @@ app.use(createCorsMiddleware(CORS_ORIGINS));
 app.use(express.json());
 
 operatorAuth.registerSessionRoutes(routes);
-app.use('/api', gatewayShutdown.handler(operatorAuth.requireAuth));
+k8Auth.registerPublicRoutes(routes);
+// K8 gets a different authenticated API namespace, NOT an operator session.
+// Unrecognized endpoints, even under /api/k8, remain operator-only or 404.
+app.use('/api', gatewayShutdown.handler((req, res, next) => {
+  if (req.path.startsWith('/k8/')) return k8Auth.requireK8(req, res, next);
+  return operatorAuth.requireAuth(req, res, next);
+}));
 // Hold every mutating API request while a backup restore is applying files, so
 // nothing can land between "writers confirmed stopped" and "archive applied"
 // and silently overwrite the recovered snapshot (issue #429).
@@ -405,6 +418,7 @@ require('./src/routes/candle-routes')(routes, { candleCache });
 require('./src/routes/updown-routes')(routes, { ...sharedDeps, updownService, candleCache, upDipPaper });
 require('./src/routes/exchange-routes')(routes, sharedDeps);
 require('./src/routes/regime-routes')(routes, sharedDeps);
+require('./src/routes/k8-routes').registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap });
 require('./src/routes/keys-routes')(routes, sharedDeps);
 require('./src/routes/backtest-routes')(routes, sharedDeps);
 require('./src/routes/legacy-routes')(routes, sharedDeps);
