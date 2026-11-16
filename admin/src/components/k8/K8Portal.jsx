@@ -183,7 +183,7 @@ function K8Experience({ session, onSignOut }) {
     }
     setNotice(level === 0
       ? 'Stop acknowledged. Existing positions and orders may remain.'
-      : 'Level ' + level + ' confirmed by the trading engine.')
+      : 'Level ' + level + ' settings confirmed. ' + (snapshot.status.isRunning ? 'Engine running.' : 'Engine remains stopped until an operator starts it.'))
     await load({ keepPreview: true })
   }
 
