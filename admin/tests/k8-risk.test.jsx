@@ -189,7 +189,6 @@ describe('K8 animal risk ladder', () => {
 
   it('refuses to apply anything when authoritative engine status is unavailable', async () => {
     const calls = setup({ statusCode: 503 })
-    await screen.findByRole('alert', { name: '' }).catch(() => null)
     await screen.findByText(/Engine status is unverified/)
     fireEvent.click(screen.getByRole('button', { name: '5: Otter' }))
     expect(screen.getByRole('button', { name: 'Apply level 5 to this fund' }).disabled).toBe(true)
