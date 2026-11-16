@@ -181,8 +181,7 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     }
     const invitation = k8Auth.createInvitation({ exchange, pair });
     // Fragment tokens do not enter HTTP request logs or Referer headers.
-    const origin = req.protocol + '://' + req.get('host');
-    res.json({ success: true, url: origin + '/k8/invite#token=' + invitation.token,
+    res.json({ success: true, url: '/k8/invite#token=' + invitation.token,
       expiresAt: invitation.expiresAt, scope: { exchange, pair } });
   });
 }
