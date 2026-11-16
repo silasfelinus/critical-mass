@@ -309,7 +309,7 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
               </div>
             </div>
           )}
-          <p className="k8-footnote">Moving the dial only previews. This does not set up the $100/month contribution. Changes require confirmation and operator access. Not a guarantee against losses.</p>
+          <p className="k8-footnote">Moving the dial only previews. This does not create or alter recurring deposits. Changes require confirmation and operator access. Not a guarantee against losses.</p>
         </div>
       </div>
     </section>
