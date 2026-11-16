@@ -86,6 +86,15 @@ export function getBaseCurrency(productId) {
   return upper
 }
 
+function K8FullPageRedirect({ exchange, pair }) {
+  // /k8 is a distinct account shell. Client-side navigation would keep the
+  // operator App mounted and bypass K8Portal's separate authentication UI.
+  useEffect(() => {
+    window.location.replace(`/k8?exchange=${encodeURIComponent(exchange)}&pair=${encodeURIComponent(pair)}`)
+  }, [exchange, pair])
+  return <p role="status">Opening K8 Wildlife…</p>
+}
+
 // Strategy-aware tab configuration
 const getTabsForStrategy = (strategy) => {
   const commonTabs = [
@@ -1086,7 +1095,7 @@ function AppContent() {
                   ? <ChartsRegime key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} />
                   : <ChartsDCA summary={summary} quoteCurrency={getQuoteCurrency(summary?.config?.productId)} />
               } />
-              <Route path="/:exchange/:pair/k8" element={<Navigate to={`/k8?exchange=${encodeURIComponent(currentExchange)}&pair=${encodeURIComponent(currentPair)}`} replace />} />
+              <Route path="/:exchange/:pair/k8" element={<K8FullPageRedirect exchange={currentExchange} pair={currentPair} />} />
               <Route path="/:exchange/:pair/config" element={<ConfigEditor key={`${currentExchange}-${currentPair}`} config={summary?.config} loadError={error || (!loading && !summary?.config ? 'Configuration is unavailable' : null)} onRetry={fetchData} onSave={fetchData} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} engineRunning={regimeRunning} engineDryRun={regimeDryRun} onRestart={fetchRegimeStatus} />} />
 
               {/* DCA-only routes (backtest, optimizer) */}
