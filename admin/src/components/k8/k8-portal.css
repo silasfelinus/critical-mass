@@ -1,0 +1,182 @@
+/* K8 entry and settings surfaces reuse the full-bleed animal theater design. */
+.k8-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 70% 40%, #4a2558, transparent 56%),
+    linear-gradient(135deg, #161020, #25113f 50%, #452354);
+  position: relative;
+  overflow: auto;
+  color: #fff1f9;
+  padding: 1rem;
+  font-family: 'Trebuchet MS', sans-serif;
+}
+.k8-login-art {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(90deg, #1b0828aa, #1b082833), url('/k8-animals/02-sloth.webp') 75% center/cover no-repeat;
+  opacity: 0.55;
+  pointer-events: none;
+}
+.k8-login-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 30rem);
+  background: #180d2ade;
+  border: 1px solid #ffe0a6b0;
+  border-radius: 1.4rem;
+  padding: clamp(1.25rem, 3vw, 2.6rem);
+  box-shadow: 0 2rem 6rem #000b;
+  backdrop-filter: blur(19px);
+}
+.k8-login-panel h1 {
+  font-family: Impact, 'Arial Black', sans-serif;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.05;
+  margin: 0.6rem 0;
+  color: #ffe390;
+}
+.k8-login-panel p { margin: 0.6rem 0 1.1rem; line-height: 1.5; }
+.k8-login-eyebrow { color: #ffd58c; letter-spacing: 0.14em; font-size: 0.72rem; font-weight: 800; }
+.k8-login-symbol { font-size: 4rem; }
+.k8-login-panel label, .k8-invite label {
+  display: block;
+  margin-top: 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.k8-login-panel input, .k8-invite input {
+  width: 100%;
+  margin-top: 0.4rem;
+  border: 1px solid #a98fb0;
+  border-radius: 0.5rem;
+  color: white;
+  background: #120e24;
+  padding: 0.8rem;
+  font-size: 1rem;
+}
+.k8-login-panel input:focus-visible, .k8-invite input:focus-visible {
+  outline: 2px solid #ffdf82;
+  outline-offset: 2px;
+}
+.k8-login-panel button:focus-visible, .k8-console button:focus-visible {
+  outline: 2px solid #ffe7a7;
+  outline-offset: 2px;
+}
+.k8-login-foot { font-size: 0.7rem; color: #c8b4d0; }
+.k8-mode {
+  display: flex;
+  gap: 0.45rem;
+  border-top: 1px solid #ffffff22;
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+}
+.k8-mode button {
+  flex: 1;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  color: #e7d5ff;
+  border: 1px solid #ffffff54;
+  font-weight: 800;
+  font-size: 0.75rem;
+}
+.k8-mode button[aria-pressed='true'] {
+  background: #ffde83;
+  color: #22142c;
+  border-color: #ffe6a0;
+}
+.k8-admin-preview {
+  color: #ffebbf;
+  font-size: 0.72rem;
+  margin-bottom: 0.65rem;
+  border-left: 3px solid #ffe08e;
+  padding: 0.35rem 0.55rem;
+  background: #ffe9a617;
+}
+.k8-explain-mini { font-size: 0.73rem; color: #eddcf6; margin-top: 0.6rem; }
+.k8-deep {
+  max-height: 26vh;
+  overflow-y: auto;
+  margin-top: 0.6rem;
+  padding: 0.65rem;
+  color: #e6dbef;
+  font-size: 0.73rem;
+  border: 1px solid #ffffff39;
+  border-radius: 0.6rem;
+}
+.k8-deep p { margin-bottom: 0.5rem; line-height: 1.35; }
+.k8-deep dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0.55rem; }
+.k8-deep dt { color: #cbb7df; }
+.k8-deep dd { font-weight: 900; }
+.k8-admin-tools {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.6rem 0 0;
+}
+.k8-admin-tools > * {
+  flex: 1;
+  color: #ffeaad;
+  font-size: 0.72rem;
+  text-align: center;
+  background: #281834a8;
+}
+.k8-invite {
+  position: relative;
+  z-index: 3;
+  max-height: 36vh;
+  overflow: auto;
+  margin-top: 0.7rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.6rem;
+  background: #1a1028;
+  border: 1px solid #d5b1df;
+}
+.k8-invite h2 { font-weight: 900; color: #ffe19d; }
+.k8-invite p { font-size: 0.7rem; line-height: 1.35; margin: 0.3rem 0; }
+.k8-invite form { display: grid; gap: 0.3rem; }
+.k8-invite input { padding: 0.4rem; margin-top: 0; font-size: 0.8rem; }
+.k8-invite label { margin-top: 0.5rem; }
+.k8-invite button, .k8-invite a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  margin-right: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  background: #ffe39a;
+  color: #21142c;
+  font-weight: 850;
+  border-radius: 0.4rem;
+  font-size: 0.74rem;
+  text-decoration: none;
+}
+.k8-invite a[aria-disabled='true'] { opacity: 0.4; cursor: not-allowed; }
+.k8-invite-link { overflow-wrap: anywhere; }
+.k8-theater picture { display: contents; }
+.k8-theater .k8-content { overflow-y: auto; scrollbar-width: thin; }
+@media (min-width: 801px) {
+  .k8-theater--left .k8-content { padding-right: 2.6rem; }
+  .k8-content { padding-bottom: 1rem; }
+  .k8-story { flex-shrink: 1; }
+  .k8-console { flex-shrink: 0; }
+}
+@media (max-width: 800px) {
+  .k8-theater .k8-content {
+    justify-content: flex-end;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  .k8-theater .k8-story { margin-top: auto; }
+  .k8-theater .k8-number { font-size: clamp(2.6rem, 7vh, 4.5rem); }
+  .k8-theater .k8-story h1 { font-size: clamp(1.7rem, 6vw, 3rem); }
+  .k8-theater .k8-story-divider, .k8-theater .k8-explanation { display: none; }
+  .k8-theater .k8-console { flex-shrink: 0; }
+  .k8-invite { max-height: 32vh; }
+  .k8-deep { max-height: 18vh; }
+}
+@media (max-height: 650px) {
+  .k8-theater .k8-content { justify-content: flex-start; padding-top: 4.1rem; }
+  .k8-theater .k8-story { margin-top: 0; }
+  .k8-theater .k8-number { font-size: 2.2rem; }
+  .k8-theater .k8-story h1 { font-size: 1.8rem; }
+  .k8-theater .k8-tagline { display: none; }
+  .k8-theater .k8-console { flex-shrink: 0; }
+}
