@@ -111,17 +111,30 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
     setSaving(true)
     setMessage('')
     try {
-      const fresh = await apiGet(url + 'config' + query)
-      if (!fresh.ok || !fresh.data?.config) {
-        setMessage('Configuration could not be rechecked. No change was sent.')
+      const [fresh, freshPresets, freshStatus] = await Promise.all([
+        apiGet(url + 'config' + query),
+        apiGet('/api/presets/aggressiveness'),
+        apiGet(url + 'status' + query),
+      ])
+      const liveStatus = freshStatus.data?.status
+      if (!fresh.ok || !fresh.data?.config ||
+        !freshStatus.ok || freshStatus.data?.engineDown ||
+        typeof liveStatus?.isRunning !== 'boolean' ||
+        typeof liveStatus?.isDryRun !== 'boolean') {
+        setMessage('Engine or configuration could not be rechecked. No change was sent.')
         return
       }
       const tracked = [...RISK_FIELDS, 'aggressiveness',
         'maxUsdcDeployed', 'maxDrawdownPercent', 'dryRun']
-      const stale = tracked.some(key =>
+      const configChanged = tracked.some(key =>
         fresh.data.config[key] !== config[key])
-      if (stale) {
-        setMessage('This fund changed in another tab. Refresh and review before applying.')
+      const modeChanged = liveStatus.isDryRun !== status?.isDryRun ||
+        liveStatus.isRunning !== status?.isRunning
+      const presetsChanged = level > 0 &&
+        (!freshPresets.ok || JSON.stringify(freshPresets.data?.presets) !==
+          JSON.stringify(presets))
+      if (configChanged || modeChanged || presetsChanged) {
+        setMessage('The fund changed since your preview. Refresh and review before applying.')
         await reload()
         return
       }
