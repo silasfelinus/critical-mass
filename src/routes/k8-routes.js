@@ -173,7 +173,10 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
   });
 
   routes.post('/api/k8/admin/invite', k8Auth.requireK8, k8Auth.adminOnly, (req, res) => {
-    const { exchange, pair } = req.body || {};
+    const { exchange, pair, dedicatedFundConfirmed } = req.body || {};
+    if (dedicatedFundConfirmed !== true) {
+      return failure(res, 400, 'Confirm that this is a dedicated K8 fund before inviting her');
+    }
     if (typeof exchange !== 'string' || typeof pair !== 'string' ||
       !getConfiguredFunds().some(f => f.exchange === exchange && f.pair === pair) ||
       getFundConfig(exchange, pair)?.strategy !== 'regime') {
