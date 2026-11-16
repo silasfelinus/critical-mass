@@ -264,7 +264,7 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
           )}
           {loading && <p role="status" className="k8-notice">Reading live configuration…</p>}
           {error && <p role="alert" className="k8-notice k8-notice--error">{error}</p>}
-          {!presetOrdered && !loading && (
+          {!presetOrdered && !loading && level > 0 && (
             <p role="alert" className="k8-notice k8-notice--error">
               The saved presets are incomplete or not ordered. Review them in Fund Config.
             </p>
