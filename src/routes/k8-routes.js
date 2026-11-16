@@ -109,8 +109,12 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     res.json({ success: true, ...data, readonly: req.k8.readonly });
   });
 
+  let mutationInFlight = false;
   routes.put('/api/k8/fund/risk', k8Auth.requireK8, async (req, res) => {
     if (req.k8.role !== 'superkate') return failure(res, 403, 'Admin K8 preview is read-only');
+    if (mutationInFlight) return failure(res, 409, 'Another K8 risk change is still processing');
+    mutationInFlight = true;
+    try {
     const { level, fingerprint } = req.body || {};
     if (!Number.isInteger(level) || level < 0 || level > 10 ||
       typeof fingerprint !== 'string' || !/^[0-9a-f]{64}$/.test(fingerprint)) {
@@ -158,6 +162,9 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
         engineRunning: current.status.isRunning });
     } catch {
       return failure(res, 503, 'Fund settings could not be saved');
+    }
+    } finally {
+      mutationInFlight = false;
     }
   });
 
