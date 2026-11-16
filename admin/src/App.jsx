@@ -20,6 +20,7 @@ const SECTION_LINKS = [
 
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const ConfigEditor = lazy(() => import('./components/ConfigEditor'))
+const K8RiskTheater = lazy(() => import('./components/k8/K8RiskTheater'))
 const TransactionsDCA = lazy(() => import('./components/TransactionsDCA'))
 const TransactionsRegime = lazy(() => import('./components/TransactionsRegime'))
 const ChartsDCA = lazy(() => import('./components/ChartsDCA'))
@@ -99,8 +100,12 @@ const getTabsForStrategy = (strategy) => {
   ]
 
   if (strategy === 'regime') {
-    // Regime strategy: no backtest/optimizer
-    return commonTabs
+    // Regime funds have a dedicated illustrated aggressiveness view.
+    return [
+      ...commonTabs.slice(0, 4),
+      { name: 'K8 Wildlife', path: '/k8' },
+      ...commonTabs.slice(4),
+    ]
   }
 
   // DCA strategies get backtest and optimizer
@@ -1048,7 +1053,7 @@ function AppContent() {
             <RetryBanner message={error} onRetry={fetchData} />
           )}
 
-          {loading && !summary && !isActiveTab('/config') && !isOverview && !isAI && !isUpDown && !isSentinel && !isGateway ? (
+          {loading && !summary && !isActiveTab('/config') && !isActiveTab('/k8') && !isOverview && !isAI && !isUpDown && !isSentinel && !isGateway ? (
             <RouteLoadingFallback />
           ) : (
             <RouteErrorBoundary key={location.pathname}>
@@ -1082,6 +1087,7 @@ function AppContent() {
                   ? <ChartsRegime key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} />
                   : <ChartsDCA summary={summary} quoteCurrency={getQuoteCurrency(summary?.config?.productId)} />
               } />
+              <Route path="/:exchange/:pair/k8" element={<K8RiskTheater key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} />} />
               <Route path="/:exchange/:pair/config" element={<ConfigEditor key={`${currentExchange}-${currentPair}`} config={summary?.config} loadError={error || (!loading && !summary?.config ? 'Configuration is unavailable' : null)} onRetry={fetchData} onSave={fetchData} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} engineRunning={regimeRunning} engineDryRun={regimeDryRun} onRestart={fetchRegimeStatus} />} />
 
               {/* DCA-only routes (backtest, optimizer) */}
