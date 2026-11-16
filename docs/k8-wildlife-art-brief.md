@@ -2,11 +2,11 @@
 
 ## Purpose
 
-K8's cinematic risk dial lives at \`/:exchange/:pair/k8\` in the authenticated
+K8's cinematic risk dial lives at `/:exchange/:pair/k8` in the authenticated
 Critical Mass admin. It is a loving private joke for K8, not an advert or
 performance claim. The selection controls genuine per-fund aggressiveness.
 The current implementation expects one immersive landscape illustration per
-numeric level in \`admin/public/k8-animals/\`. No images have been delivered
+numeric level in `admin/public/k8-animals/`. No images have been delivered
 yet. The in-app emoji/gradient treatment is an explicit temporary fallback.
 
 **Art is not complete until all eleven files exist and the phone + desktop
@@ -34,17 +34,17 @@ financial-performance promises, or logos.
 
 | Level | File | Animal + composition | Art direction |
 | --- | --- | --- | --- |
-| 0 | \`00-anemone.webp\` | Anemone on right | K8 sea anemone reclines in a neon coral penthouse, pearls and rainbow tendrils, unbothered by the apocalypse |
-| 1 | \`01-snail.webp\` | Snail on left | K8 snail with an ornate jeweled spiral shell, silk scarf and a ridiculously tiny briefcase, waiting patiently for the moon |
-| 2 | \`02-sloth.webp\` | Sloth on right | K8 sloth lounges upside-down in a velvet casino chandelier, rainbow coiffure miraculously perfect |
-| 3 | \`03-tortoise.webp\` | Tortoise on left | K8 tortoise struts across a sun-drenched art-deco boulevard, a little crown suspended over the shell |
-| 4 | \`04-capybara.webp\` | Capybara on right | K8 capybara soaks in an extravagant marble bath, cucumber slices and self-confident rainbow pompadour |
-| 5 | \`05-otter.webp\` | Otter on left | K8 otter pirouettes on a moonlit river, balancing a polished gemstone and an opera glass |
-| 6 | \`06-fox.webp\` | Fox on right | K8 fox in a sumptuous emerald velvet suit, portrait of a detective who knows the ending but won't tell |
-| 7 | \`07-cheetah.webp\` | Cheetah on left | K8 cheetah in a retro-futuristic racer jumps through a molten neon horizon, grin fully visible |
-| 8 | \`08-honey-badger.webp\` | Honey badger on right | K8 honey badger in glittering rebel armor, dramatic thunder, gold earrings catching the light |
-| 9 | \`09-phoenix.webp\` | Phoenix on left | K8 phoenix erupts from magenta and citrus flames, rainbow-feather crest, theatrical and triumphant, no money imagery |
-| 10 | \`10-dragon.webp\` | Dragon on right | K8 dragon fills a volcanic palace with iridescent rainbow scales, lounging on a mountain of comically impractical fancy buttons |
+| 0 | `00-anemone.webp` | Anemone on right | K8 sea anemone reclines in a neon coral penthouse, pearls and rainbow tendrils, unbothered by the apocalypse |
+| 1 | `01-snail.webp` | Snail on left | K8 snail with an ornate jeweled spiral shell, silk scarf and a ridiculously tiny briefcase, waiting patiently for the moon |
+| 2 | `02-sloth.webp` | Sloth on right | K8 sloth lounges upside-down in a velvet casino chandelier, rainbow coiffure miraculously perfect |
+| 3 | `03-tortoise.webp` | Tortoise on left | K8 tortoise struts across a sun-drenched art-deco boulevard, a little crown suspended over the shell |
+| 4 | `04-capybara.webp` | Capybara on right | K8 capybara soaks in an extravagant marble bath, cucumber slices and self-confident rainbow pompadour |
+| 5 | `05-otter.webp` | Otter on left | K8 otter pirouettes on a moonlit river, balancing a polished gemstone and an opera glass |
+| 6 | `06-fox.webp` | Fox on right | K8 fox in a sumptuous emerald velvet suit, portrait of a detective who knows the ending but won't tell |
+| 7 | `07-cheetah.webp` | Cheetah on left | K8 cheetah in a retro-futuristic racer jumps through a molten neon horizon, grin fully visible |
+| 8 | `08-honey-badger.webp` | Honey badger on right | K8 honey badger in glittering rebel armor, dramatic thunder, gold earrings catching the light |
+| 9 | `09-phoenix.webp` | Phoenix on left | K8 phoenix erupts from magenta and citrus flames, rainbow-feather crest, theatrical and triumphant, no money imagery |
+| 10 | `10-dragon.webp` | Dragon on right | K8 dragon fills a volcanic palace with iridescent rainbow scales, lounging on a mountain of comically impractical fancy buttons |
 
 ## UI and investment boundaries
 
@@ -55,7 +55,7 @@ financial-performance promises, or logos.
   can be misordered, the page blocks writes until the ladder is valid.
 - Zero explicitly stops the engine; it does **not** liquidate holdings or
   guarantee existing exchange orders are cancelled.
-- \`maxUsdcDeployed\`, \`maxDrawdownPercent\`, deposits, execution mode, and
+- `maxUsdcDeployed`, `maxDrawdownPercent`, deposits, execution mode, and
   exchange selection are unchanged.
 - K8 must explicitly confirm changes; if a running engine fails to acknowledge
   a persisted setting, the UI reports saved-but-not-applied.
