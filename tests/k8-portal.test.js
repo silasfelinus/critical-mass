@@ -61,6 +61,13 @@ const withGateway = async run => {
 };
 
 describe('K8 server-side trading risk ladder', () => {
+  it('uses exactly the same interpolated parameters as the browser', async () => {
+    const ui = await import('../admin/src/components/k8/k8Risk.mjs');
+    for (let level = 1; level <= 10; level++) {
+      assert.deepEqual(paramsForLevel(level, presets), ui.riskParams(level, presets));
+    }
+  });
+
   it('matches the eleven-persona contract and keeps financial caps out of writes', () => {
     assert.equal(ordered(presets), true);
     assert.equal(paramsForLevel(0, presets), null);
