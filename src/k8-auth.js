@@ -22,7 +22,7 @@ const cookieValue = (header = '') => header.split(';')
 const requestOriginMatches = req => {
   const origin = req.get?.('origin') || req.headers?.origin;
   if (!origin) return true;
-  const host = (req.get?.('host') || req.headers?.host || '').split(',')[0].trim();
+  const host = (req.get?.('x-forwarded-host') || req.get?.('host') || req.headers?.['x-forwarded-host'] || req.headers?.host || '').split(',')[0].trim();
   return Boolean(host) && URL.canParse(origin) && new URL(origin).host === host;
 };
 const credentialsError = message => Object.assign(new Error(message), { status: 401 });
