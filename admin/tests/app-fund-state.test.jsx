@@ -139,7 +139,7 @@ it('keeps fund-view navigation reachable beside the populated running dry-run co
   })
   mount()
   const tabs = await screen.findByRole('navigation', { name: 'Fund views' })
-  for (const label of ['Dashboard', 'Cost Basis', 'Transactions', 'Charts', 'Config', 'API Keys', 'Logs']) {
+  for (const label of ['Dashboard', 'Cost Basis', 'Transactions', 'Charts', 'K8 Wildlife', 'Config', 'API Keys', 'Logs']) {
     expect(screen.getByRole('link', { name: label })).toBeTruthy()
   }
   expect(screen.getByText('DRY-RUN')).toBeTruthy()
@@ -148,7 +148,7 @@ it('keeps fund-view navigation reachable beside the populated running dry-run co
   for (const label of ['Reset', 'Close Fund', 'Stop']) {
     expect(screen.getByRole('button', { name: label, exact: true })).toBeTruthy()
   }
-  expect(tabs.querySelectorAll('a')).toHaveLength(7)
+  expect(tabs.querySelectorAll('a')).toHaveLength(8)
 
   for (const [label, route] of [['Config', 'config'], ['Charts', 'charts'], ['Logs', 'logs']]) {
     fireEvent.click(screen.getByRole('link', { name: label }))
