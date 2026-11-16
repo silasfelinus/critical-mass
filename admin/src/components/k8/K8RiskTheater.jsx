@@ -41,8 +41,12 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
     : null
   const savedRiskLevel = detectRiskLevel(config, presets)
   const effectiveLevel = running === false ? 0 : savedRiskLevel
+  const limitsVerified = Number.isFinite(config?.maxUsdcDeployed) &&
+    config.maxUsdcDeployed > 0 &&
+    Number.isFinite(config?.maxDrawdownPercent) &&
+    config.maxDrawdownPercent > 0
   const canConfigure = strategy === 'regime' && Boolean(config) &&
-    presetOrdered && running !== null
+    running !== null && (level === 0 || (presetOrdered && limitsVerified))
   const hasChange = level === 0
     ? running !== false
     : savedRiskLevel !== level
@@ -263,6 +267,11 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
           {!presetOrdered && !loading && (
             <p role="alert" className="k8-notice k8-notice--error">
               The saved presets are incomplete or not ordered. Review them in Fund Config.
+            </p>
+          )}
+          {!limitsVerified && !loading && level > 0 && (
+            <p role="alert" className="k8-notice k8-notice--error">
+              Trading caps are not verified. Set the fund’s deployed-dollar and drawdown limits before applying a level.
             </p>
           )}
           {running === null && !loading && (
