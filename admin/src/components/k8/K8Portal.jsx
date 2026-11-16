@@ -93,6 +93,7 @@ function AdminInvitation({ scope, onClose }) {
     const result = await apiPost('/api/k8/admin/invite', {
       exchange: exchange.trim().toLowerCase(),
       pair: pair.trim().toUpperCase(),
+      dedicatedFundConfirmed: dedicated,
     })
     setPending(false)
     if (!result.ok) return setError(result.error || 'Could not create an invitation')
