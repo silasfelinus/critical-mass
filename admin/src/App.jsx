@@ -20,7 +20,6 @@ const SECTION_LINKS = [
 
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const ConfigEditor = lazy(() => import('./components/ConfigEditor'))
-const K8RiskTheater = lazy(() => import('./components/k8/K8RiskTheater'))
 const TransactionsDCA = lazy(() => import('./components/TransactionsDCA'))
 const TransactionsRegime = lazy(() => import('./components/TransactionsRegime'))
 const ChartsDCA = lazy(() => import('./components/ChartsDCA'))
@@ -1087,7 +1086,7 @@ function AppContent() {
                   ? <ChartsRegime key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} />
                   : <ChartsDCA summary={summary} quoteCurrency={getQuoteCurrency(summary?.config?.productId)} />
               } />
-              <Route path="/:exchange/:pair/k8" element={<K8RiskTheater key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} />} />
+              <Route path="/:exchange/:pair/k8" element={<Navigate to={`/k8?exchange=${encodeURIComponent(currentExchange)}&pair=${encodeURIComponent(currentPair)}`} replace />} />
               <Route path="/:exchange/:pair/config" element={<ConfigEditor key={`${currentExchange}-${currentPair}`} config={summary?.config} loadError={error || (!loading && !summary?.config ? 'Configuration is unavailable' : null)} onRetry={fetchData} onSave={fetchData} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} engineRunning={regimeRunning} engineDryRun={regimeDryRun} onRestart={fetchRegimeStatus} />} />
 
               {/* DCA-only routes (backtest, optimizer) */}
