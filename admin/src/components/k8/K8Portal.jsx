@@ -95,7 +95,7 @@ function AdminInvitation({ scope, onClose }) {
     })
     setPending(false)
     if (!result.ok) return setError(result.error || 'Could not create an invitation')
-    setLink(result.data.url)
+    setLink(new URL(result.data.url, window.location.origin).toString())
     setExpiresAt(result.data.expiresAt)
   }
   const mailto = link && recipient.trim()
