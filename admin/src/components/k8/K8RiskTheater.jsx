@@ -39,12 +39,13 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
   const running = typeof status?.isRunning === 'boolean'
     ? status.isRunning
     : null
-  const effectiveLevel = running === false
-    ? 0
-    : detectRiskLevel(config, presets)
+  const savedRiskLevel = detectRiskLevel(config, presets)
+  const effectiveLevel = running === false ? 0 : savedRiskLevel
   const canConfigure = strategy === 'regime' && Boolean(config) &&
     presetOrdered && running !== null
-  const hasChange = level !== effectiveLevel
+  const hasChange = level === 0
+    ? running !== false
+    : savedRiskLevel !== level
   const live = status?.isDryRun === false
   const displayValue = level === 0 ? 'Engine stop' : 'Trading aggressiveness'
 
@@ -244,9 +245,10 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
             </div>
             <div>
               <span>Applied / preview</span>
-              <strong>{running === null ? 'Unknown' : effectiveLevel === null
-                ? 'Custom / ' + level
-                : effectiveLevel + ' / ' + level}</strong>
+              <strong>{running === null ? 'Unknown' : running === false
+                ? 'Stopped (saved ' + (savedRiskLevel ?? 'custom') + ') / ' + level
+                : effectiveLevel === null ? 'Custom / ' + level
+                  : effectiveLevel + ' / ' + level}</strong>
             </div>
           </div>
           {level > 0 && params && (
@@ -298,7 +300,7 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
               </div>
             </div>
           )}
-          <p className="k8-footnote">Moving the dial only previews. Changes require confirmation and operator access. Not a guarantee against losses.</p>
+          <p className="k8-footnote">Moving the dial only previews. This does not set up the $100/month contribution. Changes require confirmation and operator access. Not a guarantee against losses.</p>
         </div>
       </div>
     </section>
