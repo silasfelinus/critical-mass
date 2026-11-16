@@ -59,7 +59,7 @@ financial-performance promises, or logos.
   exchange selection are unchanged.
 - K8 must explicitly confirm changes; if a running engine fails to acknowledge
   a persisted setting, the UI reports saved-but-not-applied.
-- The $100/month plan is **not** an existing software cap or subscription
+- The contribution plan is **not** an existing software cap or subscription
   created by this page. Confirm the real exchange capital cap and contribution
   schedule separately before ever running with live funds.
 - Risk is an ordering of trading aggressiveness, not a measured 0–10
