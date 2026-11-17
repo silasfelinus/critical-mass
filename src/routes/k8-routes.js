@@ -68,8 +68,8 @@ const failure = (res, status, error) => res.status(status).json({ success: false
 // fund-scoped values known to this specific regime engine.
 function readFundMetrics(status, pair) {
   const position = status?.position || {};
-  const price = Number(status?.market?.lastPrice);
-  const held = Number(position.totalAsset);
+  const price = status?.market?.lastPrice;
+  const held = position.totalAsset;
   const availablePrice = Number.isFinite(price) && price > 0 &&
     status?.market?.stale !== true;
   const asset = typeof pair === 'string' ? pair.split('-')[0] : '';
