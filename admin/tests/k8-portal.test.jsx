@@ -57,7 +57,7 @@ describe('K8 immersive animal portfolio', () => {
   it('starts on the saved animal and shows an accurately scoped position value', async () => {
     setup('superkate')
     await screen.findByRole('heading', { name: 'K8 THE SLOTH' })
-    expect(screen.getByText('$480.00')).toBeTruthy()
+    expect(await screen.findByText('$480.00')).toBeTruthy()
     expect(screen.getByText('0.005000 BTC')).toBeTruthy()
     expect(screen.getByText('$15.35')).toBeTruthy()
     expect(screen.getByRole('link', { name: /Critical Mass/i }).getAttribute('href')).toBe('/')
