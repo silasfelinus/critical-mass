@@ -372,10 +372,14 @@
   .k8-immersive-story,
   .k8-immersive-story--right,
   .k8-immersive-story--left {
-    top: clamp(3.7rem, 13dvh, 7rem);
-    left: 1rem;
+    top: auto;
+    bottom: calc(var(--k8-dock-height) + 1rem);
+    left: 0.65rem;
     right: auto;
-    width: calc(100vw - 2rem);
+    width: calc(100vw - 1.3rem);
+    padding: 0.55rem 0.7rem 0.2rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(0deg, #100b25b8, transparent);
   }
   .k8-immersive-numeral { font-size: clamp(3.5rem, 11vw, 6rem); }
   .k8-immersive-story h1 { font-size: clamp(2rem, 6.6vw, 3.3rem); }
@@ -395,7 +399,7 @@
 
 @media (max-height: 680px) {
   .k8-immersive { --k8-dock-height: 190px; }
-  .k8-immersive-story { top: 4rem; }
+  .k8-immersive-story { top: auto; bottom: calc(var(--k8-dock-height) + 0.5rem); }
   .k8-immersive-numeral { font-size: 3.1rem; }
   .k8-immersive-story h1 { font-size: 2.2rem; }
   .k8-immersive-description { display: none; }
