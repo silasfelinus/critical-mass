@@ -301,7 +301,7 @@ function K8Experience({ session, onSignOut }) {
             <span>Saved level</span><strong>{currentName}{Number.isInteger(applied) ? ' · ' + applied : ''}</strong>
           </div>
           <div className="k8-immersive-fact">
-            <span>BTC position value</span><strong>{money(metrics?.positionValueQuote)}</strong>
+            <span>Estimated fund value</span><strong>{money(metrics?.fundEquityQuote)}</strong>
           </div>
           <div className="k8-immersive-fact">
             <span>{metrics?.asset || 'BTC'} held</span><strong>{holding}</strong>
@@ -394,6 +394,7 @@ function K8Experience({ session, onSignOut }) {
                   <div><dt>Investment cap</dt><dd>{money(snapshot?.config?.maxUsdcDeployed)}</dd></div>
                   <div><dt>Drawdown guard</dt><dd>{snapshot?.config?.maxDrawdownPercent ?? 'Unavailable'}%</dd></div>
                   <div><dt>Exchange balance</dt><dd>{money(metrics?.accountBalanceQuote)}</dd></div>
+                  <div><dt>BTC position value</dt><dd>{money(metrics?.positionValueQuote)}</dd></div>
                   <div><dt>Trading status</dt><dd>{snapshot?.status?.isRunning ? 'Running' : 'Stopped / unavailable'}</dd></div>
                 </dl>
               ) : (
