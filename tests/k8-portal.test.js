@@ -66,13 +66,15 @@ describe('K8 server-side trading risk ladder', () => {
       market: { lastPrice: 100000, stale: false },
       position: { totalAsset: 0.005, realizedPnL: 22.2, cyclesCompleted: 4 },
     };
-    const metrics = readFundMetrics(status, 'BTC-USDC');
+    const metrics = readFundMetrics(status, 'BTC-USDC', { maxUsdcDeployed: 100 });
     assert.equal(metrics.positionValueQuote, 500);
+    assert.equal(metrics.fundEquityQuote, 622.2);
     assert.equal(metrics.accountBalanceQuote, null);
     assert.equal(metrics.heldAsset, 0.005);
     assert.equal(metrics.realizedPnlQuote, 22.2);
     assert.equal(metrics.cyclesCompleted, 4);
-    assert.match(metrics.valuationNote, /not included/i);
+    assert.match(metrics.valuationNote, /not the exchange account balance/i);
+    assert.equal(readFundMetrics({ ...status, market: { lastPrice: 100000, stale: true } }, 'BTC-USDC', { maxUsdcDeployed: 100 }).fundEquityQuote, null);
     assert.equal(readFundMetrics({ ...status, market: { lastPrice: 100000, stale: true } }, 'BTC-USDC').positionValueQuote, null);
     assert.equal(readFundMetrics({ position: {} }, 'BTC-USDC').positionValueQuote, null);
   });
