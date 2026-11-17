@@ -20,7 +20,6 @@ const SECTION_LINKS = [
 
 const Dashboard = lazy(() => import('./components/Dashboard'))
 const ConfigEditor = lazy(() => import('./components/ConfigEditor'))
-const K8RiskTheater = lazy(() => import('./components/k8/K8RiskTheater'))
 const TransactionsDCA = lazy(() => import('./components/TransactionsDCA'))
 const TransactionsRegime = lazy(() => import('./components/TransactionsRegime'))
 const ChartsDCA = lazy(() => import('./components/ChartsDCA'))
@@ -85,6 +84,15 @@ export function getBaseCurrency(productId) {
   const match = upper.match(/^(.+?)(EUR|GBP|SGD|BTC|ETH)$/)
   if (match) return match[1]
   return upper
+}
+
+function K8FullPageRedirect({ exchange, pair }) {
+  // /k8 is a distinct account shell. Client-side navigation would keep the
+  // operator App mounted and bypass K8Portal's separate authentication UI.
+  useEffect(() => {
+    window.location.replace(`/k8?exchange=${encodeURIComponent(exchange)}&pair=${encodeURIComponent(pair)}`)
+  }, [exchange, pair])
+  return <p role="status">Opening K8 Wildlife…</p>
 }
 
 // Strategy-aware tab configuration
@@ -1087,7 +1095,7 @@ function AppContent() {
                   ? <ChartsRegime key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} />
                   : <ChartsDCA summary={summary} quoteCurrency={getQuoteCurrency(summary?.config?.productId)} />
               } />
-              <Route path="/:exchange/:pair/k8" element={<K8RiskTheater key={`${currentExchange}-${currentPair}`} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} />} />
+              <Route path="/:exchange/:pair/k8" element={<K8FullPageRedirect exchange={currentExchange} pair={currentPair} />} />
               <Route path="/:exchange/:pair/config" element={<ConfigEditor key={`${currentExchange}-${currentPair}`} config={summary?.config} loadError={error || (!loading && !summary?.config ? 'Configuration is unavailable' : null)} onRetry={fetchData} onSave={fetchData} exchange={currentExchange} pair={currentPair} strategy={currentStrategy} engineRunning={regimeRunning} engineDryRun={regimeDryRun} onRestart={fetchRegimeStatus} />} />
 
               {/* DCA-only routes (backtest, optimizer) */}
