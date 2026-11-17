@@ -33,6 +33,7 @@ const { createWebSocketFeed } = require('./websocket-feed');
 const { createRegimeDetector } = require('./regime-detector');
 const { createPositionSizer } = require('./position-sizer');
 const { createRiskManager, computeFundEquity } = require('./risk-manager');
+const { getEffectiveDeploymentCap } = require('./deployment-budget');
 const { createOrderExecutor } = require('./order-executor');
 const { classifyBodyTpCancellation } = require('./cancellation-result');
 const { createDryRunExecutor } = require('./dry-run-executor');
@@ -5211,7 +5212,7 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
     // whole placement and a sweep requested meanwhile runs after it.
     await engineLocks.withEntryLock(() => engineLocks.withLadderLock(async () => {
       // Calculate remaining budget, capped at actual available balance
-      let remainingBudget = config.maxUsdcDeployed - getAllocatedCapital();
+      let remainingBudget = getEffectiveDeploymentCap(config) - getAllocatedCapital();
       const quoteCurrency = getQuoteCurrency(productId);
       const quoteBalance = await lookupOrNull('getAccountBalance', quoteCurrency, adapter.getAccountBalance(quoteCurrency));
       if (!quoteBalance) {
@@ -5353,7 +5354,7 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
     // Apply macro regime size multiplier, then the minimum-size floor / last-order rule
     const macroMult = macroRegime ? macroRegime.getMultipliers() : { sizeMult: 1.0, tpMult: 1.0, offsetMult: 1.0 };
     const minSize = config.minOrderSizeUsdc || exchangeConfig.minOrderSize || 1;
-    const remainingBudget = roundUSDC(Math.max(0, config.maxUsdcDeployed - positionState.totalCostBasis));
+    const remainingBudget = roundUSDC(Math.max(0, getEffectiveDeploymentCap(config) - positionState.totalCostBasis));
     // Auto-aggressiveness (Phase 3): depression-score multiplier damped by the capital governor
     const deployedRatio = config.maxUsdcDeployed > 0 ? positionState.totalCostBasis / config.maxUsdcDeployed : 1;
     const autoMult = macroRegime?.getAutoSizeMult ? macroRegime.getAutoSizeMult(deployedRatio) : { active: false, multiplier: 1 };
@@ -7076,7 +7077,7 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
     }
 
     const allocatedCapital = getAllocatedCapital();
-    let remainingBudget = config.maxUsdcDeployed - allocatedCapital;
+    let remainingBudget = getEffectiveDeploymentCap(config) - allocatedCapital;
 
     // Fetch actual exchange balance to cap budget at reality
     const quoteCurrency = getQuoteCurrency(productId);
@@ -7087,7 +7088,7 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
     }
 
     if (remainingBudget < (config.baseSizeUsdc || 50)) {
-      const budgetRemaining = (config.maxUsdcDeployed - allocatedCapital).toFixed(2);
+      const budgetRemaining = (getEffectiveDeploymentCap(config) - allocatedCapital).toFixed(2);
       const balanceStr = exchangeBalance !== null ? `$${exchangeBalance.toFixed(2)}` : 'unknown';
       return { success: false, message: `Exchange ${quoteCurrency} balance (${balanceStr}) below min order ($${config.baseSizeUsdc || 50}). Budget shows $${budgetRemaining} remaining but exchange only has ${balanceStr} ${quoteCurrency}.` };
     }
@@ -7180,7 +7181,7 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
     }
 
     const allocatedCapital = getAllocatedCapital();
-    let remainingBudget = config.maxUsdcDeployed - allocatedCapital;
+    let remainingBudget = getEffectiveDeploymentCap(config) - allocatedCapital;
     const quoteCurrency = getQuoteCurrency(productId);
     const quoteBalance = await lookupOrNull('getAccountBalance', quoteCurrency, adapter.getAccountBalance(quoteCurrency));
     if (!quoteBalance) {
@@ -7191,7 +7192,7 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
       remainingBudget = availableQuote;
     }
     if (remainingBudget < (config.baseSizeUsdc || 50)) {
-      const budgetRemaining = (config.maxUsdcDeployed - allocatedCapital).toFixed(2);
+      const budgetRemaining = (getEffectiveDeploymentCap(config) - allocatedCapital).toFixed(2);
       return { success: false, message: `Exchange ${quoteCurrency} balance ($${availableQuote.toFixed(2)}) below min order size ($${config.baseSizeUsdc || 50}). Budget says $${budgetRemaining} available but only $${availableQuote.toFixed(2)} ${quoteCurrency} on exchange. Deposit more ${quoteCurrency} or lower baseSizeUsdc.` };
     }
 
@@ -7267,9 +7268,9 @@ const createRegimeEngine = (exchange, pairOrExchangeConfig, exchangeConfigOrCall
       return sum + unbookedSize * (Number(u.unitCost) || 0);
     }, 0);
     const postCancelAllocated = getAllocatedCapital() + unbookedSpend;
-    remainingBudget = Math.min(config.maxUsdcDeployed - postCancelAllocated, postCancelQuote);
+    remainingBudget = Math.min(getEffectiveDeploymentCap(config) - postCancelAllocated, postCancelQuote);
     if (remainingBudget < (config.baseSizeUsdc || 50)) {
-      return { success: false, message: `Budget dropped below min order size after a fill landed during ladder cancel ($${remainingBudget.toFixed(2)} left — $${(config.maxUsdcDeployed - postCancelAllocated).toFixed(2)} under the deployed cap, $${postCancelQuote.toFixed(2)} ${quoteCurrency} available). The old ladder was cancelled but not rebuilt — call rebuildLadder again if appropriate.` };
+      return { success: false, message: `Budget dropped below min order size after a fill landed during ladder cancel ($${remainingBudget.toFixed(2)} left — $${(getEffectiveDeploymentCap(config) - postCancelAllocated).toFixed(2)} under the deployed cap, $${postCancelQuote.toFixed(2)} ${quoteCurrency} available). The old ladder was cancelled but not rebuilt — call rebuildLadder again if appropriate.` };
     }
     if (postCancelAllocated !== allocatedCapital || postCancelQuote !== availableQuote) {
       logger.info(`🔄 [${exchange}] Re-derived ladder budget after a cancel-time fill: $${remainingBudget.toFixed(2)} (allocated=$${postCancelAllocated.toFixed(2)}, was $${allocatedCapital.toFixed(2)}; available ${quoteCurrency}=$${postCancelQuote.toFixed(2)}, was $${availableQuote.toFixed(2)})`);
