@@ -64,6 +64,32 @@ const snapshotFingerprint = (config, status, presets) => hash({
 });
 const failure = (res, status, error) => res.status(status).json({ success: false, error });
 
+// An engine position is NOT the entire exchange account. Only expose
+// fund-scoped values known to this specific regime engine.
+function readFundMetrics(status, pair) {
+  const position = status?.position || {};
+  const price = Number(status?.market?.lastPrice);
+  const held = Number(position.totalAsset);
+  const availablePrice = Number.isFinite(price) && price > 0 &&
+    status?.market?.stale !== true;
+  const asset = typeof pair === 'string' ? pair.split('-')[0] : '';
+  return {
+    asset,
+    heldAsset: Number.isFinite(held) && held >= 0 ? held : null,
+    marketPriceQuote: availablePrice ? price : null,
+    positionValueQuote: availablePrice && Number.isFinite(held) && held >= 0
+      ? Number((held * price).toFixed(2)) : null,
+    realizedPnlQuote: Number.isFinite(position.realizedPnL)
+      ? position.realizedPnL : null,
+    cyclesCompleted: Number.isSafeInteger(position.cyclesCompleted)
+      ? position.cyclesCompleted : null,
+    accountBalanceQuote: null,
+    valuationNote: availablePrice
+      ? 'Tracked fund position only. Exchange cash and other holdings are not included.'
+      : 'Live fund valuation unavailable. No exchange account balance is provided.',
+  };
+}
+
 function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
   const getScope = () => k8Auth.getScope();
   const getFund = () => {
@@ -97,6 +123,7 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     };
     return {
       scope, config: visibleConfig(config), presets, status,
+      metrics: readFundMetrics(result.status, scope.pair),
       fingerprint: snapshotFingerprint(config, status, presets),
       savedLevel: detectLevel(config, presets),
       appliedLevel: status.isRunning ? detectLevel(config, presets) : 0,
@@ -190,4 +217,4 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
 }
 
 module.exports = { registerK8FundRoutes, paramsForLevel, detectLevel,
-  ordered, snapshotFingerprint, visibleConfig };
+  ordered, snapshotFingerprint, visibleConfig, readFundMetrics };
