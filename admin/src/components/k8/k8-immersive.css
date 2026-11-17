@@ -1,0 +1,411 @@
+.k8-immersive {
+  --k8-dock-height: 220px;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff9f2;
+  background: #170f28;
+}
+
+.k8-immersive-visual,
+.k8-immersive-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.k8-immersive-visual {
+  z-index: 0;
+}
+
+.k8-immersive-scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+}
+
+.k8-immersive-scene img {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.k8-immersive-scene--incoming {
+  animation: k8-scene-arrives 650ms ease-out both;
+}
+
+.k8-immersive-scene--outgoing {
+  animation: k8-scene-departs 650ms ease-in both;
+}
+
+@keyframes k8-scene-arrives {
+  from { opacity: 0; transform: scale(1.035); filter: blur(8px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+@keyframes k8-scene-departs {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.025); }
+}
+
+.k8-immersive-vignette {
+  z-index: 1;
+  background:
+    linear-gradient(0deg, rgba(10, 9, 23, 0.9), transparent 37%),
+    linear-gradient(90deg, rgba(12, 10, 26, 0.84), rgba(12, 10, 26, 0.45) 32%, transparent 72%);
+}
+
+.k8-immersive--left .k8-immersive-vignette {
+  background:
+    linear-gradient(0deg, rgba(10, 9, 23, 0.9), transparent 37%),
+    linear-gradient(270deg, rgba(12, 10, 26, 0.84), rgba(12, 10, 26, 0.45) 32%, transparent 72%);
+}
+
+.k8-immersive-top {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: max(0.8rem, env(safe-area-inset-top)) clamp(0.8rem, 3vw, 2.2rem);
+  font-family: 'Trebuchet MS', sans-serif;
+}
+
+.k8-immersive-mark {
+  font: italic 900 clamp(1.2rem, 2.6vw, 2rem) Impact, 'Arial Black', sans-serif;
+  letter-spacing: 0.075em;
+  color: #ffe29a;
+  text-shadow: 0 0.15rem 0.7rem #170521;
+  white-space: nowrap;
+}
+
+.k8-immersive-mark span {
+  font-size: 0.56em;
+  letter-spacing: 0.13em;
+  color: #fff;
+}
+
+.k8-immersive-toplinks {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.k8-immersive-preview {
+  font-size: 0.67rem;
+  font-weight: 900;
+  color: #ffe6a9;
+  text-shadow: 0 1px #150b26;
+}
+
+.k8-immersive-link {
+  color: #fff1d5;
+  text-decoration: none;
+  font-size: 0.74rem;
+  font-weight: 800;
+  border: 1px solid #ffffff66;
+  border-radius: 0.55rem;
+  padding: 0.48rem 0.75rem;
+  background: #100e2ca1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.k8-immersive-link:hover,
+.k8-immersive-link:focus-visible {
+  color: #1c1231;
+  background: #ffe2a7;
+  outline-offset: 3px;
+}
+
+.k8-immersive-story {
+  position: absolute;
+  z-index: 2;
+  top: clamp(5rem, 17vh, 11rem);
+  width: min(43vw, 34rem);
+  text-shadow: 0 0.14rem 1.4rem #100b23;
+  animation: k8-story-arrives 420ms ease-out both;
+}
+
+.k8-immersive-story--right { left: clamp(1rem, 5vw, 5rem); }
+.k8-immersive-story--left { right: clamp(1rem, 5vw, 5rem); }
+
+@keyframes k8-story-arrives {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.k8-immersive-overline {
+  display: block;
+  font: 800 clamp(0.65rem, 0.9vw, 0.8rem) 'Trebuchet MS', sans-serif;
+  letter-spacing: 0.19em;
+  color: #ffe69d;
+}
+
+.k8-immersive-numeral {
+  font: italic 900 clamp(3.7rem, 9vw, 8rem)/0.96 Impact, 'Arial Black', sans-serif;
+  color: #ffdc81;
+  text-shadow: 0.045em 0.05em #dc546f, 0.085em 0.13em #211037;
+}
+
+.k8-immersive-numeral small {
+  font-size: 0.32em;
+  margin-left: 0.1em;
+  color: #fff4e3;
+}
+
+.k8-immersive-story h1 {
+  font: 900 clamp(2rem, 4.4vw, 4.4rem)/0.98 Impact, 'Arial Black', sans-serif;
+  letter-spacing: 0.03em;
+  max-width: 14ch;
+  margin-top: 0.3rem;
+}
+
+.k8-immersive-quote {
+  font-size: clamp(1rem, 1.5vw, 1.4rem);
+  margin-top: 0.8rem;
+  font-weight: 800;
+  font-style: italic;
+  color: #fbe1ff;
+}
+
+.k8-immersive-description {
+  max-width: 42ch;
+  margin-top: 0.8rem;
+  font-size: clamp(0.78rem, 1.15vw, 1rem);
+  line-height: 1.4;
+  color: #f4e6f5;
+}
+
+.k8-immersive-dock {
+  position: absolute;
+  z-index: 5;
+  bottom: max(0.65rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: min(900px, calc(100vw - 2rem));
+  height: var(--k8-dock-height);
+  padding: 0.75rem 1.15rem;
+  background: #171025ef;
+  border: 1px solid #ffd49d9e;
+  border-radius: 1.15rem;
+  box-shadow: 0 1rem 3rem #060310a8, inset 0 1px #ffffff38;
+  backdrop-filter: blur(18px);
+}
+
+.k8-immersive-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  border-bottom: 1px solid #ffffff36;
+  padding-bottom: 0.58rem;
+}
+
+.k8-immersive-fact { min-width: 0; }
+.k8-immersive-fact span {
+  display: block;
+  font-size: 0.66rem;
+  color: #d0bedb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.k8-immersive-fact strong {
+  display: block;
+  font-size: clamp(0.78rem, 1.05vw, 1.06rem);
+  margin-top: 0.18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.k8-immersive-scale-label {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  font-size: 0.7rem;
+  color: #ffe6a0;
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: 0.075em;
+}
+
+.k8-immersive-dock .k8-range {
+  margin: 0.45rem 0 0.2rem;
+  width: 100%;
+  min-height: 1.35rem;
+}
+
+.k8-immersive-dock .k8-tick {
+  min-height: 1.9rem;
+}
+
+.k8-immersive-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.45rem;
+  min-height: 2.45rem;
+}
+
+.k8-immersive-actions button {
+  cursor: pointer;
+  border-radius: 0.5rem;
+  min-height: 2.3rem;
+  padding: 0.42rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  border: 1px solid #fff3dc66;
+  background: #29213a;
+}
+
+.k8-immersive-actions button:focus-visible,
+.k8-immersive-tick:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.k8-immersive-actions .k8-immersive-apply {
+  flex: 1;
+  background: #ffe19a;
+  color: #24132d;
+  border-color: #ffe9bf;
+}
+
+.k8-immersive-actions button:disabled { opacity: 0.55; cursor: not-allowed; }
+.k8-immersive-readonly { flex: 1; font-size: 0.74rem; color: #ffdc9c; }
+.k8-immersive-toast {
+  position: absolute;
+  bottom: calc(100% + 0.6rem);
+  left: 0;
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border-radius: 0.6rem;
+  background: #242044f5;
+  border: 1px solid #ffe19a;
+  font-size: 0.76rem;
+}
+
+.k8-immersive-toast--error { color: #ffb6c9; border-color: #ff9ab2; }
+
+.k8-immersive-panel {
+  position: absolute;
+  z-index: 8;
+  bottom: calc(var(--k8-dock-height) + 2rem);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 2rem));
+  max-height: calc(100dvh - var(--k8-dock-height) - 6rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  padding: 0.9rem;
+  border: 1px solid #ffe6ac;
+  border-radius: 0.9rem;
+  background: #211633f5;
+  box-shadow: 0 1rem 3rem #050213cf;
+}
+
+.k8-immersive-panel h2 {
+  font: 900 1.3rem Impact, 'Arial Black', sans-serif;
+  color: #ffe49e;
+  margin-bottom: 0.4rem;
+}
+
+.k8-immersive-panel p {
+  margin-top: 0.55rem;
+  font-size: 0.79rem;
+  line-height: 1.45;
+}
+
+.k8-immersive-panel-close {
+  float: right;
+  padding: 0.15rem 0.55rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.k8-immersive-panel .k8-confirm { margin: 0; padding: 0; background: none; border: 0; }
+
+.k8-immersive-data {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 0.6rem;
+}
+
+.k8-immersive-data div { border-bottom: 1px solid #ffffff29; padding: 0.35rem 0; }
+.k8-immersive-data dt { font-size: 0.65rem; color: #cbbce0; }
+.k8-immersive-data dd { font-size: 0.9rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+.k8-immersive-panel .k8-invite {
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+}
+
+@media (max-width: 800px) {
+  .k8-immersive { --k8-dock-height: 212px; }
+  .k8-immersive-top { padding: max(0.4rem, env(safe-area-inset-top)) 0.75rem; }
+  .k8-immersive-toplinks { gap: 0.3rem; }
+  .k8-immersive-toplinks .k8-status { font-size: 0.57rem; }
+  .k8-immersive-mark { font-size: 1.25rem; }
+  .k8-immersive-link { padding: 0.4rem 0.5rem; font-size: 0.65rem; }
+  .k8-immersive-preview { display: none; }
+  .k8-immersive-vignette,
+  .k8-immersive--left .k8-immersive-vignette {
+    background:
+      linear-gradient(0deg, #100b1cf5, transparent 54%),
+      linear-gradient(180deg, #100b1c88, transparent 45%);
+  }
+  .k8-immersive-story,
+  .k8-immersive-story--right,
+  .k8-immersive-story--left {
+    top: clamp(3.7rem, 13dvh, 7rem);
+    left: 1rem;
+    right: auto;
+    width: calc(100vw - 2rem);
+  }
+  .k8-immersive-numeral { font-size: clamp(3.5rem, 11vw, 6rem); }
+  .k8-immersive-story h1 { font-size: clamp(2rem, 6.6vw, 3.3rem); }
+  .k8-immersive-description { max-width: 38ch; font-size: 0.79rem; margin-top: 0.3rem; }
+  .k8-immersive-quote { margin-top: 0.4rem; font-size: 0.9rem; }
+  .k8-immersive-dock { width: calc(100vw - 1rem); padding: 0.7rem; border-radius: 0.85rem; }
+  .k8-immersive-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.3rem; padding-bottom: 0.3rem; }
+  .k8-immersive-fact span { font-size: 0.58rem; }
+  .k8-immersive-fact strong { font-size: 0.76rem; }
+  .k8-immersive-scale-label { padding-top: 0.25rem; font-size: 0.59rem; }
+  .k8-immersive-dock .k8-range { margin-top: 0.25rem; min-height: 1rem; }
+  .k8-immersive-dock .k8-tick { min-height: 1.6rem; }
+  .k8-immersive-actions { margin-top: 0.32rem; }
+  .k8-immersive-actions button { min-height: 2rem; padding: 0.25rem 0.5rem; font-size: 0.72rem; }
+  .k8-immersive-panel { bottom: calc(var(--k8-dock-height) + 1.4rem); max-height: calc(100dvh - var(--k8-dock-height) - 5rem); }
+}
+
+@media (max-height: 680px) {
+  .k8-immersive { --k8-dock-height: 190px; }
+  .k8-immersive-story { top: 4rem; }
+  .k8-immersive-numeral { font-size: 3.1rem; }
+  .k8-immersive-story h1 { font-size: 2.2rem; }
+  .k8-immersive-description { display: none; }
+  .k8-immersive-dock { padding-top: 0.45rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k8-immersive-scene--incoming,
+  .k8-immersive-scene--outgoing,
+  .k8-immersive-story {
+    animation: none;
+  }
+}
