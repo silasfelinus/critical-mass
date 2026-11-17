@@ -86,7 +86,7 @@ const createRiskManager = (exchange, config, productId) => {
     if (newTotal > cap) {
       return {
         allowed: false,
-        reason: `usdc_cap_exceeded:${roundUSDC(newTotal)}>${cap}`
+        reason: `usdc_cap_exceeded:${roundUSDC(newTotal)}>${cap}`,
         currentUsdc: currentDeployed,
         maxUsdc: cap,
       };
