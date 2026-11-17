@@ -22,7 +22,8 @@ describe('Kind Robots K8 bridge', () => {
         let identity;
         let status;
         const req = {
-          method, path: route, headers: { 'x-k8-bridge-token': credential },
+          method, originalUrl: route, path: route.replace(/^\/api/, ''),
+          headers: { 'x-k8-bridge-token': credential },
           get(name) { return this.headers[name]; },
         };
         const res = {
