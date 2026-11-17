@@ -211,6 +211,10 @@ function K8Experience({ session, onSignOut }) {
   const baseParams = useMemo(
     () => riskParams(level, snapshot?.presets), [level, snapshot?.presets],
   )
+  const lowerLevelShare = level <= 1 ? 1
+    : riskParams(level - 1, snapshot?.presets, snapshot?.levelOverrides)?.maxDeploymentPercent ?? 1
+  const upperLevelShare = level >= 10 ? 100
+    : riskParams(level + 1, snapshot?.presets, snapshot?.levelOverrides)?.maxDeploymentPercent ?? 100
   useEffect(() => {
     if (previewParams) setProfileDraft(Object.fromEntries(
       Object.entries(previewParams).filter(([key]) => key !== 'aggressiveness'),
@@ -448,8 +452,8 @@ function K8Experience({ session, onSignOut }) {
                   <input
                     id="k8-deployment-share"
                     type="number"
-                    min="1"
-                    max="100"
+                    min={lowerLevelShare}
+                    max={upperLevelShare}
                     step="1"
                     disabled={admin || profileSaving}
                     value={profileDraft.maxDeploymentPercent ?? ''}
@@ -461,8 +465,16 @@ function K8Experience({ session, onSignOut }) {
                     Up to {money(snapshot?.config?.maxUsdcDeployed *
                       (profileDraft.maxDeploymentPercent ?? 0) / 100)}
                     {' '}of the {money(snapshot?.config?.maxUsdcDeployed)} fund ceiling.
-                    Remaining capital stays uncommitted for future entries.
+                    This caps NEW buys. Existing holdings and resting orders are not reduced.
                   </p>
+                  <p>Keep this level between {lowerLevelShare}% and {upperLevelShare}% so higher animals remain at least as adventurous.</p>
+                  {Number.isFinite(snapshot?.allocatedQuote) &&
+                    snapshot.allocatedQuote > snapshot.config.maxUsdcDeployed *
+                      (profileDraft.maxDeploymentPercent ?? 0) / 100 && (
+                      <p role="status" className="k8-notice k8-notice--error">
+                        Existing BTC exposure already exceeds this new-buy cap. No automatic sales or order cancellations will occur.
+                      </p>
+                    )}
                   <dl className="k8-immersive-data">
                     <div><dt>Configured fund ceiling</dt><dd>{money(snapshot?.config?.maxUsdcDeployed)}</dd></div>
                     <div><dt>Drawdown guard</dt><dd>{snapshot?.config?.maxDrawdownPercent ?? 'Unavailable'}%</dd></div>
