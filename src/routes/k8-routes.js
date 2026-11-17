@@ -207,6 +207,78 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     }
   });
 
+  // Saving a level profile only updates K8's private policy library; no
+  // engine settings change until she separately confirms Apply on that animal.
+  routes.put('/api/k8/fund/levels', k8Auth.requireK8, async (req, res) => {
+    if (req.k8.role !== 'superkate') return failure(res, 403, 'Admin K8 preview is read-only');
+    if (mutationInFlight) return failure(res, 409, 'Another K8 change is still processing');
+    mutationInFlight = true;
+    try {
+      const { level, overrides, fingerprint } = req.body || {};
+      if (!Number.isInteger(level) || level < 1 || level > 10 ||
+        typeof fingerprint !== 'string' || !/^[0-9a-f]{64}$/.test(fingerprint)) {
+        return failure(res, 400, 'Choose an animal 1–10 with the current snapshot fingerprint');
+      }
+      if (overrides !== null && (typeof overrides !== 'object' || Array.isArray(overrides))) {
+        return failure(res, 400, 'Settings overrides must be an object or null to reset');
+      }
+      const values = overrides || {};
+      for (const [key, value] of Object.entries(values)) {
+        if (!LEVEL_KEYS.includes(key) || !Number.isFinite(value)) {
+          return failure(res, 400, 'Only valid numeric animal strategy settings can be overridden');
+        }
+        if (key === 'maxDeploymentPercent') {
+          if (!Number.isInteger(value) || value < 1 || value > 100) {
+            return failure(res, 400, 'Deployment percentage must be a whole number from 1 to 100');
+          }
+        } else {
+          const rule = PRESET_FIELD_RULES[key];
+          if (!rule || value < rule.min || value > rule.max) {
+            return failure(res, 400, 'Invalid value for ' + key);
+          }
+        }
+      }
+      const current = await readSnapshot();
+      if (current.error) return failure(res, current.code, current.error);
+      if (current.fingerprint !== fingerprint) {
+        return failure(res, 409, 'This fund or its animal profiles changed. Reload and review.');
+      }
+      if (!ordered(current.presets)) return failure(res, 409, 'Base risk presets are incomplete or unordered');
+
+      const proposedOverrides = { ...current.levelOverrides };
+      if (Object.keys(values).length > 0) proposedOverrides[level] = { ...values };
+      else delete proposedOverrides[level];
+      const plan = paramsForLevel(level, current.presets, proposedOverrides);
+      const check = prepareConfigUpdate({
+        exchange: current.scope.exchange, pair: current.scope.pair, updates: plan,
+      });
+      if (!check.valid || Object.keys(check.fundUpdates || {}).length ||
+        Object.keys(check.regimeUpdates || {}).some(key =>
+          key !== 'aggressiveness' && !LEVEL_KEYS.includes(key))) {
+        return failure(res, 400, 'Customized profile does not pass strategy validation');
+      }
+      // Level numbers must retain an understandable ordering of spending
+      // headroom even when a user customizes individual animals.
+      let previous = 0;
+      for (let n = 1; n <= 10; n += 1) {
+        const candidate = paramsForLevel(n, current.presets, proposedOverrides);
+        if (!candidate || !Number.isInteger(candidate.maxDeploymentPercent) ||
+          candidate.maxDeploymentPercent < previous ||
+          candidate.maxDeploymentPercent > 100) {
+          return failure(res, 400, 'Spending percentages must not decrease as animal levels increase');
+        }
+        previous = candidate.maxDeploymentPercent;
+      }
+      k8Auth.saveLevelOverride(level, Object.keys(values).length ? values : null);
+      return res.json({ success: true, saved: true, level,
+        note: 'Profile saved. Trading settings will change only after Apply is confirmed.' });
+    } catch {
+      return failure(res, 503, 'Could not persist animal profile');
+    } finally {
+      mutationInFlight = false;
+    }
+  });
+
   routes.get('/api/k8/admin/status', k8Auth.requireK8, k8Auth.adminOnly, (req, res) => {
     res.json({ success: true, scope: getScope(), hasAccount: k8Auth.hasAccount() });
   });
