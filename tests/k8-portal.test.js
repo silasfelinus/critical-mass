@@ -79,11 +79,18 @@ describe('K8 server-side trading risk ladder', () => {
     assert.equal(readFundMetrics({ position: {} }, 'BTC-USDC').positionValueQuote, null);
   });
 
-  it('uses exactly the same interpolated parameters as the browser', async () => {
+  it('keeps frontend and backend in agreement, including custom per-level overrides', async () => {
     const ui = await import('../admin/src/components/k8/k8Risk.mjs');
+    const overrides = { 2: { maxDeploymentPercent: 25, minIntervalMs: 170000 } };
     for (let level = 1; level <= 10; level++) {
-      assert.deepEqual(paramsForLevel(level, presets), ui.riskParams(level, presets));
+      const server = paramsForLevel(level, presets);
+      assert.deepEqual(server, ui.riskParams(level, presets));
+      assert.equal(server.maxDeploymentPercent, level * 10);
+      assert.deepEqual(paramsForLevel(level, presets, overrides), ui.riskParams(level, presets, overrides));
+      assert.equal(detectLevel(server, presets), level);
     }
+    assert.equal(paramsForLevel(2, presets, overrides).maxDeploymentPercent, 25);
+    assert.equal(detectLevel(paramsForLevel(2, presets, overrides), presets, overrides), 2);
   });
 
   it('matches the eleven-persona contract and keeps financial caps out of writes', () => {
@@ -107,6 +114,27 @@ describe('K8 server-side trading risk ladder', () => {
 });
 
 describe('K8 separate invitation and permissions', () => {
+  it('persists custom animal policy privately and clears it on fund reassignment', async () => {
+    await withGateway(async ({ k8, authFile }) => {
+      k8.createInvitation({ exchange: 'coinbase', pair: 'BTC-USDC' });
+      k8.saveLevelOverride(2, { maxDeploymentPercent: 25, minIntervalMs: 170000 });
+      assert.deepEqual(k8.getLevelOverrides()['2'], {
+        maxDeploymentPercent: 25, minIntervalMs: 170000,
+      });
+      const stored = JSON.parse(fs.readFileSync(authFile, 'utf8'));
+      assert.deepEqual(stored.levelOverrides['2'], {
+        maxDeploymentPercent: 25, minIntervalMs: 170000,
+      });
+      k8.createInvitation({ exchange: 'coinbase', pair: 'BTC-USDC' });
+      assert.equal(k8.getLevelOverrides()['2'].maxDeploymentPercent, 25);
+      k8.saveLevelOverride(2, null);
+      assert.equal(k8.getLevelOverrides()['2'], undefined);
+      k8.saveLevelOverride(3, { maxDeploymentPercent: 35 });
+      k8.createInvitation({ exchange: 'gemini', pair: 'BTC-USD' });
+      assert.deepEqual(k8.getLevelOverrides(), {});
+    });
+  });
+
   it('uses one-time invites, independent cookies, and denies access to the operator API', async () => {
     await withGateway(async ({ k8, base, authFile }) => {
       const initial = await fetch(base + '/api/k8/session').then(r => r.json());

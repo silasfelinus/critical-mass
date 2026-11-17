@@ -43,9 +43,12 @@ const INT_FIELDS = new Set([
   'entryOffsetDownBps',
 ])
 
-export const RISK_FIELDS = [...FIELD_KEYS]
+export const RISK_FIELDS = [...FIELD_KEYS, 'maxDeploymentPercent']
 
-export function riskParams(level, presets) {
+// The animal number is also the default share of the independent fund cap:
+// 0 = stop, 1 = 10%, ... 10 = 100%. Custom settings can override each level.
+
+export function riskParams(level, presets, levelOverrides = {}) {
   if (!Number.isInteger(level) || level < 1 || level > 10) return null
   const lower = [...ANCHORS].reverse().find(anchor => anchor.level <= level)
   const upper = ANCHORS.find(anchor => anchor.level >= level)
@@ -63,15 +66,21 @@ export function riskParams(level, presets) {
       ? Math.round(value)
       : Number(value.toFixed(3))
   }
-  return { aggressiveness: lower.preset, ...params }
+  const override = levelOverrides?.[level] || {}
+  return {
+    aggressiveness: lower.preset,
+    ...params,
+    maxDeploymentPercent: level * 10,
+    ...override,
+  }
 }
 
-export function detectRiskLevel(config, presets) {
+export function detectRiskLevel(config, presets, levelOverrides = {}) {
   if (!config || !presets) return null
   for (let level = 1; level <= 10; level += 1) {
-    const params = riskParams(level, presets)
+    const params = riskParams(level, presets, levelOverrides)
     if (!params) continue
-    const matches = FIELD_KEYS.every(key =>
+    const matches = RISK_FIELDS.every(key =>
       Number.isFinite(config[key]) && Math.abs(config[key] - params[key]) < 0.005)
     if (matches) return level
   }

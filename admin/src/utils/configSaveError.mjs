@@ -77,6 +77,7 @@ export const CONFIG_FIELD_LABELS = {
   aggressiveness: 'Aggressiveness Level',
   baseSizeUsdc: 'Base Size',
   maxUsdcDeployed: 'Max Deployed',
+  maxDeploymentPercent: 'Animal Deployment Limit %',
   maxAssetExposure: 'Max Asset Exposure',
   totalAllocation: 'Allocation',
   minOrderSize: 'Min Order',

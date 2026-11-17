@@ -146,13 +146,13 @@ const money = value =>
     ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
     : 'Unavailable'
 
-const animalSummary = level => {
+const animalSummary = (level, percent = level * 10) => {
   if (level === 0) return 'Trading engine stopped. Existing orders and holdings may remain.'
-  if (level <= 2) return 'Quiet, deliberate entries. The slow lane still carries investment risk.'
-  if (level <= 4) return 'Measured entries, with room for the occasional opportunity.'
-  if (level <= 6) return 'Balanced curiosity. More frequent trade entries may be possible.'
-  if (level <= 8) return 'Eager market entries, with higher activity and greater risk.'
-  return 'Maximum entry aggressiveness. Capital limits stay unchanged.'
+  if (level <= 2) return `Quiet entries, up to ${percent}% of the authorized fund budget. Still exposed to losses.`
+  if (level <= 4) return `Measured entries, up to ${percent}% of the authorized fund budget.`
+  if (level <= 6) return `Balanced activity, up to ${percent}% of the authorized fund budget.`
+  if (level <= 8) return `Faster entries, up to ${percent}% of the authorized fund budget.`
+  return `Maximum entry aggressiveness, up to ${percent}% of the authorized fund budget.`
 }
 
 function K8Artwork({ animal, layer = 'incoming' }) {
@@ -173,6 +173,20 @@ function K8Artwork({ animal, layer = 'incoming' }) {
   )
 }
 
+const PROFILE_FIELDS = [
+  ['kFactor', 'Volatility trigger (ATR multiplier)'],
+  ['minIntervalMs', 'Minimum between entries (milliseconds)'],
+  ['maxIntervalMs', 'Maximum interval (milliseconds)'],
+  ['entryOffsetBps', 'Entry price offset (basis points)'],
+  ['entryOffsetUpBps', 'Rising-market entry offset (bps)'],
+  ['entryOffsetDownBps', 'Falling-market entry offset (bps)'],
+  ['orderStaleMs', 'Order stale timeout (milliseconds)'],
+  ['cautionScale', 'Caution position-sizing multiplier'],
+  ['trendScale', 'Trend position-sizing multiplier'],
+  ['maxCycleBuys', 'Maximum buys in one cycle'],
+  ['mergeProximityScale', 'Merge proximity multiplier'],
+]
+
 function K8Experience({ session, onSignOut }) {
   const [snapshot, setSnapshot] = useState(null)
   const [level, setLevel] = useState(2)
@@ -183,13 +197,31 @@ function K8Experience({ session, onSignOut }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileDraft, setProfileDraft] = useState({})
+  const [profileError, setProfileError] = useState('')
   const admin = session.role === 'admin'
   const animal = K8_ANIMALS[level]
   const applied = snapshot?.appliedLevel
   const previewParams = useMemo(
-    () => riskParams(level, snapshot?.presets),
-    [level, snapshot?.presets],
+    () => riskParams(level, snapshot?.presets, snapshot?.levelOverrides),
+    [level, snapshot?.presets, snapshot?.levelOverrides],
   )
+
+  const baseParams = useMemo(
+    () => riskParams(level, snapshot?.presets), [level, snapshot?.presets],
+  )
+  const lowerLevelShare = level <= 1 ? 1
+    : riskParams(level - 1, snapshot?.presets, snapshot?.levelOverrides)?.maxDeploymentPercent ?? 1
+  const upperLevelShare = level >= 10 ? 100
+    : riskParams(level + 1, snapshot?.presets, snapshot?.levelOverrides)?.maxDeploymentPercent ?? 100
+  useEffect(() => {
+    if (previewParams) setProfileDraft(Object.fromEntries(
+      Object.entries(previewParams).filter(([key]) => key !== 'aggressiveness'),
+    ))
+    else setProfileDraft({})
+    setProfileError('')
+  }, [level, previewParams])
 
   const load = useCallback(async ({ keepPreview = false } = {}) => {
     setLoading(true)
@@ -252,6 +284,27 @@ function K8Experience({ session, onSignOut }) {
     await load({ keepPreview: true })
   }
 
+  const saveProfile = async (reset = false) => {
+    if (admin || level === 0 || !snapshot || profileSaving || !previewParams || !baseParams) return
+    setProfileSaving(true)
+    setProfileError('')
+    const overrides = reset ? null : Object.fromEntries(
+      Object.entries(profileDraft).filter(([key, value]) =>
+        key !== 'aggressiveness' && value !== baseParams[key]),
+    )
+    const response = await apiPut('/api/k8/fund/levels', {
+      level, overrides, fingerprint: snapshot.fingerprint,
+    })
+    setProfileSaving(false)
+    if (!response.ok) {
+      setProfileError(describeMutationFailure(response, 'Could not save animal profile'))
+      await load({ keepPreview: true })
+      return
+    }
+    setNotice('Animal profile saved. Confirm Apply separately to change live strategy settings.')
+    await load({ keepPreview: true })
+  }
+
   const metrics = snapshot?.metrics
   const holding = Number.isFinite(metrics?.heldAsset)
     ? metrics.heldAsset.toFixed(6) + ' ' + (metrics.asset || 'BTC')
@@ -292,7 +345,7 @@ function K8Experience({ session, onSignOut }) {
         <div className="k8-immersive-numeral">{String(level).padStart(2, '0')}<small>/10</small></div>
         <h1>K8 THE {animal.name.toUpperCase()}</h1>
         <p className="k8-immersive-quote">“{animal.mood}”</p>
-        <p className="k8-immersive-description">{animalSummary(level)}</p>
+        <p className="k8-immersive-description">{animalSummary(level, previewParams?.maxDeploymentPercent)}</p>
       </div>
 
       <aside className="k8-immersive-dock" aria-label="K8 risk selector">
@@ -312,7 +365,7 @@ function K8Experience({ session, onSignOut }) {
         </div>
         <div className="k8-immersive-scale-label">
           <label htmlFor="k8-risk-slider">Risk animal</label>
-          <span>{level === applied ? 'CURRENT SELECTION' : 'PREVIEW · NOT APPLIED'}</span>
+          <span>{level === 0 ? 'ENGINE STOP' : `${previewParams?.maxDeploymentPercent ?? level * 10}% MAX DEPLOYED`} · {level === applied ? 'CURRENT' : 'PREVIEW'}</span>
         </div>
         <input
           id="k8-risk-slider"
@@ -370,7 +423,7 @@ function K8Experience({ session, onSignOut }) {
                 Confirm level {level} for {snapshot?.scope?.exchange} / {snapshot?.scope?.pair}.
                 {snapshot?.status?.isDryRun === false ? ' Live-money mode.' : ' Simulation mode.'}
               </p>
-              <p>Level 0 stops the engine, not the holdings. Higher levels change trade entry parameters, not the dollar cap. Crypto can lose its full value.</p>
+              <p>Level 0 stops the engine, not the holdings. Other levels set trading speed and a {previewParams?.maxDeploymentPercent ?? level * 10}% cap on NEW buy exposure (up to {money(snapshot?.config?.maxUsdcDeployed * (previewParams?.maxDeploymentPercent ?? level * 10) / 100)}). They never raise the authorized fund ceiling. Existing positions and resting buy orders are not automatically sold or cancelled. Crypto can lose its full value.</p>
               <div className="k8-confirm-actions">
                 <button type="button" onClick={() => setPanel('')} disabled={saving}>Cancel</button>
                 <button type="button" onClick={apply} disabled={saving}>
@@ -389,23 +442,97 @@ function K8Experience({ session, onSignOut }) {
                 <button type="button" aria-pressed={!details} onClick={() => setDetails(false)}>Simple</button>
                 <button type="button" aria-pressed={details} onClick={() => setDetails(true)}>Deep</button>
               </div>
-              {!details ? (
-                <dl className="k8-immersive-data">
-                  <div><dt>Investment cap</dt><dd>{money(snapshot?.config?.maxUsdcDeployed)}</dd></div>
-                  <div><dt>Drawdown guard</dt><dd>{snapshot?.config?.maxDrawdownPercent ?? 'Unavailable'}%</dd></div>
-                  <div><dt>Exchange balance</dt><dd>{money(metrics?.accountBalanceQuote)}</dd></div>
-                  <div><dt>BTC position value</dt><dd>{money(metrics?.positionValueQuote)}</dd></div>
-                  <div><dt>Trading status</dt><dd>{snapshot?.status?.isRunning ? 'Running' : 'Stopped / unavailable'}</dd></div>
-                </dl>
+              {level === 0 ? (
+                <p>Level 0 always stops the trading engine. This safety action is not editable and does not liquidate existing holdings.</p>
               ) : (
-                <dl className="k8-immersive-data">
-                  <div><dt>Minimum entry interval</dt><dd>{previewParams?.minIntervalMs ?? '–'} ms</dd></div>
-                  <div><dt>Maximum buys per cycle</dt><dd>{previewParams?.maxCycleBuys ?? '–'}</dd></div>
-                  <div><dt>Entry offset</dt><dd>{previewParams?.entryOffsetBps ?? '–'} bps</dd></div>
-                  <div><dt>Trend scale</dt><dd>{previewParams?.trendScale ?? '–'}</dd></div>
-                  <div><dt>Completed cycles</dt><dd>{metrics?.cyclesCompleted ?? 'Unavailable'}</dd></div>
-                </dl>
+                <form onSubmit={event => { event.preventDefault(); void saveProfile() }}>
+                  <label className="k8-profile-label" htmlFor="k8-deployment-share">
+                    Maximum fund deployment (% of authorized budget)
+                  </label>
+                  <input
+                    id="k8-deployment-share"
+                    type="number"
+                    min={lowerLevelShare}
+                    max={upperLevelShare}
+                    step="1"
+                    disabled={admin || profileSaving}
+                    value={profileDraft.maxDeploymentPercent ?? ''}
+                    onChange={event => setProfileDraft(prev => ({
+                      ...prev, maxDeploymentPercent: Number(event.target.value),
+                    }))}
+                  />
+                  <p>
+                    Up to {money(snapshot?.config?.maxUsdcDeployed *
+                      (profileDraft.maxDeploymentPercent ?? 0) / 100)}
+                    {' '}of the {money(snapshot?.config?.maxUsdcDeployed)} fund ceiling.
+                    This caps NEW buys. Existing holdings and resting orders are not reduced.
+                  </p>
+                  <p>Keep this level between {lowerLevelShare}% and {upperLevelShare}% so higher animals remain at least as adventurous.</p>
+                  {Number.isFinite(snapshot?.allocatedQuote) &&
+                    snapshot.allocatedQuote > snapshot.config.maxUsdcDeployed *
+                      (profileDraft.maxDeploymentPercent ?? 0) / 100 && (
+                      <p role="status" className="k8-notice k8-notice--error">
+                        Existing BTC exposure already exceeds this new-buy cap. No automatic sales or order cancellations will occur.
+                      </p>
+                    )}
+                  <dl className="k8-immersive-data">
+                    <div><dt>Configured fund ceiling</dt><dd>{money(snapshot?.config?.maxUsdcDeployed)}</dd></div>
+                    <div><dt>Drawdown guard</dt><dd>{snapshot?.config?.maxDrawdownPercent ?? 'Unavailable'}%</dd></div>
+                    <div><dt>Already deployed</dt><dd>{money(snapshot?.allocatedQuote)}</dd></div>
+                    <div><dt>Resting buy orders</dt><dd>{snapshot?.pendingBuyOrders ?? 'Unavailable'}</dd></div>
+                  </dl>
+                  {details && (
+                    <div className="k8-profile-advanced" aria-label="Detailed animal parameters">
+                      <p>These change the actual regime-entry rules for this animal. Savings remain a preview until the animal is applied.</p>
+                      {PROFILE_FIELDS.map(([key, label]) => (
+                        <label className="k8-profile-field" key={key}>
+                          <span>{label}</span>
+                          <input
+                            type="number"
+                            step="any"
+                            disabled={admin || profileSaving}
+                            value={profileDraft[key] ?? ''}
+                            onChange={event => setProfileDraft(prev => ({
+                              ...prev, [key]: Number(event.target.value),
+                            }))}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {profileError && <p role="alert" className="k8-notice k8-notice--error">{profileError}</p>}
+                  {admin ? (
+                    <p>Admin preview is read-only. K8 can customize profiles in her own session.</p>
+                  ) : (
+                    <div className="k8-profile-actions">
+                      <button type="submit" disabled={profileSaving || loading}>
+                        {profileSaving ? 'Saving…' : 'Save animal settings'}
+                      </button>
+                      <button type="button" disabled={profileSaving || loading}
+                        onClick={() => void saveProfile(true)}>
+                        Restore defaults
+                      </button>
+                    </div>
+                  )}
+                  <p>
+                    Saving these numbers does not immediately alter the engine.
+                    Confirm Apply to enact the new profile. Lowering the ceiling
+                    cannot cancel resting buys or sell positions already held.
+                  </p>
+                </form>
               )}
+              {!details && (
+                <p className="k8-profile-summary">
+                  Your animal's buy frequency, entry thresholds, and cycle limits
+                  use the configured regime preset. Open Deep to inspect and override them.
+                </p>
+              )}
+              <dl className="k8-immersive-data">
+                <div><dt>Exchange balance</dt><dd>{money(metrics?.accountBalanceQuote)}</dd></div>
+                <div><dt>BTC position value</dt><dd>{money(metrics?.positionValueQuote)}</dd></div>
+                <div><dt>Trading status</dt><dd>{snapshot?.status?.isRunning ? 'Running' : 'Stopped / unavailable'}</dd></div>
+                <div><dt>Completed cycles</dt><dd>{metrics?.cyclesCompleted ?? 'Unavailable'}</dd></div>
+              </dl>
               <p>{metrics?.valuationNote || 'Fund data is temporarily unavailable.'}</p>
               <p>The dial previews changes. All investment settings remain bounded by the operator-configured limits.</p>
               {admin && <a className="k8-immersive-link" href="/k8/login-preview">Preview K8 login</a>}

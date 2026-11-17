@@ -6,6 +6,8 @@ const { getConfiguredFunds, getFundConfig, getAggressivenessPresets } = require(
 const { buildClientConfig, prepareConfigUpdate, persistConfigUpdate } = require('./config-update');
 const { IPC_CHANNELS } = require('../ipc/ipc-protocol');
 const { computeFundEquity } = require('../risk-manager');
+const { getEffectiveDeploymentCap } = require('../deployment-budget');
+const { PRESET_FIELD_RULES } = require('../regime-preset-contract');
 
 const PARAM_KEYS = Object.freeze([
   'kFactor', 'minIntervalMs', 'maxIntervalMs', 'entryOffsetBps',
@@ -17,10 +19,11 @@ const ANCHORS = [{ level: 1, preset: 'conservative' },
   { level: 10, preset: 'maximum' }];
 const INTEGERS = new Set(['minIntervalMs', 'maxIntervalMs', 'orderStaleMs',
   'maxCycleBuys', 'entryOffsetBps', 'entryOffsetUpBps', 'entryOffsetDownBps']);
-const SAFE_FIELDS = [...PARAM_KEYS, 'aggressiveness', 'maxUsdcDeployed',
+const LEVEL_KEYS = [...PARAM_KEYS, 'maxDeploymentPercent'];
+const SAFE_FIELDS = [...LEVEL_KEYS, 'aggressiveness', 'maxUsdcDeployed',
   'maxDrawdownPercent', 'dryRun'];
 
-function paramsForLevel(level, presets) {
+function paramsForLevel(level, presets, levelOverrides = {}) {
   if (!Number.isInteger(level) || level < 1 || level > 10) return null;
   const lower = [...ANCHORS].reverse().find(anchor => anchor.level <= level);
   const upper = ANCHORS.find(anchor => anchor.level >= level);
@@ -35,7 +38,8 @@ function paramsForLevel(level, presets) {
     const value = from[key] + (to[key] - from[key]) * fraction;
     params[key] = INTEGERS.has(key) ? Math.round(value) : Number(value.toFixed(3));
   }
-  return { aggressiveness: lower.preset, ...params };
+  return { aggressiveness: lower.preset, ...params,
+    maxDeploymentPercent: level * 10, ...(levelOverrides[level] || {}) };
 }
 
 const ordered = presets => ANCHORS.every(a => paramsForLevel(a.level, presets)) &&
@@ -48,10 +52,10 @@ const ordered = presets => ANCHORS.every(a => paramsForLevel(a.level, presets)) 
         .every(key => previous[key] <= next[key]);
   });
 
-function detectLevel(config, presets) {
+function detectLevel(config, presets, levelOverrides = {}) {
   for (let level = 1; level <= 10; level++) {
-    const params = paramsForLevel(level, presets);
-    if (params && PARAM_KEYS.every(key =>
+    const params = paramsForLevel(level, presets, levelOverrides);
+    if (params && LEVEL_KEYS.every(key =>
       Number.isFinite(config?.[key]) && Math.abs(config[key] - params[key]) < 0.005)) return level;
   }
   return null;
@@ -59,9 +63,9 @@ function detectLevel(config, presets) {
 
 const hash = input => crypto.createHash('sha256').update(JSON.stringify(input)).digest('hex');
 const visibleConfig = config => Object.fromEntries(SAFE_FIELDS.map(key => [key, config[key]]));
-const snapshotFingerprint = (config, status, presets) => hash({
+const snapshotFingerprint = (config, status, presets, levelOverrides = {}) => hash({
   config: visibleConfig(config), isRunning: status?.isRunning,
-  isDryRun: status?.isDryRun, presets,
+  isDryRun: status?.isDryRun, presets, levelOverrides,
 });
 const failure = (res, status, error) => res.status(status).json({ success: false, error });
 
@@ -108,6 +112,7 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     if (!scope) return { error: 'K8 must be assigned an existing regime fund', code: 409 };
     const config = buildClientConfig(scope.exchange, scope.pair);
     const presets = getAggressivenessPresets();
+    const levelOverrides = k8Auth.getLevelOverrides();
     const ipc = exchangeIPCMap[scope.exchange];
     if (!ipc) return { error: 'Exchange engine not configured', code: 503 };
     let result;
@@ -126,11 +131,14 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
       isDryRun: result.status.isDryRun,
     };
     return {
-      scope, config: visibleConfig(config), presets, status,
+      scope, config: visibleConfig(config), presets, levelOverrides, status,
+      effectiveBuyCap: getEffectiveDeploymentCap(config),
+      allocatedQuote: result.status.position?.totalCostBasis ?? null,
+      pendingBuyOrders: (result.status.orders?.entries || 0) + (result.status.orders?.ladderEntries || 0),
       metrics: readFundMetrics(result.status, scope.pair, config),
-      fingerprint: snapshotFingerprint(config, status, presets),
-      savedLevel: detectLevel(config, presets),
-      appliedLevel: status.isRunning ? detectLevel(config, presets) : 0,
+      fingerprint: snapshotFingerprint(config, status, presets, levelOverrides),
+      savedLevel: detectLevel(config, presets, levelOverrides),
+      appliedLevel: status.isRunning ? detectLevel(config, presets, levelOverrides) : 0,
     };
   };
 
@@ -174,11 +182,11 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
       !(current.config.maxDrawdownPercent > 0)) {
       return failure(res, 409, 'The operator must set a capital cap and drawdown guard first');
     }
-    const params = paramsForLevel(level, current.presets);
+    const params = paramsForLevel(level, current.presets, current.levelOverrides);
     if (!params) return failure(res, 409, 'Risk level is not supported by current presets');
     const prepared = prepareConfigUpdate({ exchange, pair, updates: params });
     if (!prepared.valid || Object.keys(prepared.fundUpdates).length ||
-      Object.keys(prepared.regimeUpdates).some(key => !PARAM_KEYS.includes(key) && key !== 'aggressiveness')) {
+      Object.keys(prepared.regimeUpdates).some(key => !LEVEL_KEYS.includes(key) && key !== 'aggressiveness')) {
       return failure(res, 400, 'Risk update was rejected by the fund validator');
     }
     try {
@@ -194,6 +202,81 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     } catch {
       return failure(res, 503, 'Fund settings could not be saved');
     }
+    } finally {
+      mutationInFlight = false;
+    }
+  });
+
+  // Saving a level profile only updates K8's private policy library; no
+  // engine settings change until she separately confirms Apply on that animal.
+  routes.put('/api/k8/fund/levels', k8Auth.requireK8, async (req, res) => {
+    if (req.k8.role !== 'superkate') return failure(res, 403, 'Admin K8 preview is read-only');
+    if (mutationInFlight) return failure(res, 409, 'Another K8 change is still processing');
+    mutationInFlight = true;
+    try {
+      const { level, overrides, fingerprint } = req.body || {};
+      if (!Number.isInteger(level) || level < 1 || level > 10 ||
+        typeof fingerprint !== 'string' || !/^[0-9a-f]{64}$/.test(fingerprint)) {
+        return failure(res, 400, 'Choose an animal 1–10 with the current snapshot fingerprint');
+      }
+      if (overrides !== null && (typeof overrides !== 'object' || Array.isArray(overrides))) {
+        return failure(res, 400, 'Settings overrides must be an object or null to reset');
+      }
+      const values = overrides || {};
+      for (const [key, value] of Object.entries(values)) {
+        if (!LEVEL_KEYS.includes(key) || !Number.isFinite(value)) {
+          return failure(res, 400, 'Only valid numeric animal strategy settings can be overridden');
+        }
+        if (key !== 'maxDeploymentPercent' && INTEGERS.has(key) && !Number.isInteger(value)) {
+          return failure(res, 400, key + ' must be a whole number');
+        }
+        if (key === 'maxDeploymentPercent') {
+          if (!Number.isInteger(value) || value < 1 || value > 100) {
+            return failure(res, 400, 'Deployment percentage must be a whole number from 1 to 100');
+          }
+        } else {
+          const rule = PRESET_FIELD_RULES[key];
+          if (!rule || value < rule.min || value > rule.max) {
+            return failure(res, 400, 'Invalid value for ' + key);
+          }
+        }
+      }
+      const current = await readSnapshot();
+      if (current.error) return failure(res, current.code, current.error);
+      if (current.fingerprint !== fingerprint) {
+        return failure(res, 409, 'This fund or its animal profiles changed. Reload and review.');
+      }
+      if (!ordered(current.presets)) return failure(res, 409, 'Base risk presets are incomplete or unordered');
+
+      const proposedOverrides = { ...current.levelOverrides };
+      if (Object.keys(values).length > 0) proposedOverrides[level] = { ...values };
+      else delete proposedOverrides[level];
+      const plan = paramsForLevel(level, current.presets, proposedOverrides);
+      const check = prepareConfigUpdate({
+        exchange: current.scope.exchange, pair: current.scope.pair, updates: plan,
+      });
+      if (!check.valid || Object.keys(check.fundUpdates || {}).length ||
+        Object.keys(check.regimeUpdates || {}).some(key =>
+          key !== 'aggressiveness' && !LEVEL_KEYS.includes(key))) {
+        return failure(res, 400, 'Customized profile does not pass strategy validation');
+      }
+      // Level numbers must retain an understandable ordering of spending
+      // headroom even when a user customizes individual animals.
+      let previous = 0;
+      for (let n = 1; n <= 10; n += 1) {
+        const candidate = paramsForLevel(n, current.presets, proposedOverrides);
+        if (!candidate || !Number.isInteger(candidate.maxDeploymentPercent) ||
+          candidate.maxDeploymentPercent < previous ||
+          candidate.maxDeploymentPercent > 100) {
+          return failure(res, 400, 'Spending percentages must not decrease as animal levels increase');
+        }
+        previous = candidate.maxDeploymentPercent;
+      }
+      k8Auth.saveLevelOverride(level, Object.keys(values).length ? values : null);
+      return res.json({ success: true, saved: true, level,
+        note: 'Profile saved. Trading settings will change only after Apply is confirmed.' });
+    } catch {
+      return failure(res, 503, 'Could not persist animal profile');
     } finally {
       mutationInFlight = false;
     }

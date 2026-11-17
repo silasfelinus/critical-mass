@@ -62,6 +62,7 @@ const REGIME_FIELD_RULES = {
   maxAssetExposure: { type: 'number' },
   depositedCapital: { type: 'number' },
   maxUsdcDeployed: { type: 'number' },
+  maxDeploymentPercent: { type: 'number' },
   maxDrawdownPercent: { type: 'number' },
   drawdownResetHours: { type: 'number' },
   entryOffsetBps: { type: 'number' },
@@ -327,6 +328,9 @@ const validateRegimeConfig = (config) => {
   if (config.maxUsdcDeployed !== undefined) {
     const err = validateMaxUsdcDeployed(config.maxUsdcDeployed);
     if (err) errors.push(err);
+  }
+  if (config.maxDeploymentPercent !== undefined && (!Number.isInteger(config.maxDeploymentPercent) || config.maxDeploymentPercent < 0 || config.maxDeploymentPercent > 100)) {
+    errors.push('maxDeploymentPercent must be an integer from 0 to 100');
   }
   if (config.maxDrawdownPercent !== undefined && (!(config.maxDrawdownPercent > 0) || config.maxDrawdownPercent > 100)) {
     errors.push('maxDrawdownPercent must be greater than 0 and at most 100');

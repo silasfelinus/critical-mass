@@ -172,6 +172,19 @@ function createK8Auth({ authFile, readJSON, writeJSON, operatorAuth, now = Date.
     });
   };
 
+  // Custom animal overrides are private server-side account data. They are
+  // neither browser-local preferences nor changes to the operator hard cap.
+  const getLevelOverrides = () => record.levelOverrides || {};
+  const saveLevelOverride = (level, override) => {
+    if (!Number.isInteger(level) || level < 1 || level > 10) {
+      throw new Error('Animal level must be 1–10');
+    }
+    const next = { ...getLevelOverrides() };
+    if (override && Object.keys(override).length) next[level] = { ...override };
+    else delete next[level];
+    save({ ...record, levelOverrides: next });
+  };
+
   const createInvitation = ({ exchange, pair }) => {
     // No identity, password, or invitation secret is ever committed to Git.
     const token = crypto.randomBytes(32).toString('base64url');
@@ -179,6 +192,8 @@ function createK8Auth({ authFile, readJSON, writeJSON, operatorAuth, now = Date.
       ...record,
       version: 1,
       scope: { exchange, pair },
+      levelOverrides: record.scope?.exchange === exchange && record.scope?.pair === pair
+        ? getLevelOverrides() : {},
       inviteHash: hash(token),
       inviteExpires: now() + INVITE_TTL_MS,
     });
@@ -187,6 +202,7 @@ function createK8Auth({ authFile, readJSON, writeJSON, operatorAuth, now = Date.
 
   return { registerPublicRoutes, requireK8, adminOnly, createInvitation,
     getScope: () => record.scope || null, hasAccount: () => Boolean(record.account),
+    getLevelOverrides, saveLevelOverride,
     currentVersion: () => record.sessionEpoch ?? 0,
   };
 }

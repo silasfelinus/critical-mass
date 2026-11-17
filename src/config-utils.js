@@ -202,6 +202,7 @@ const REGIME_DEFAULTS = {
   maxAssetExposure: 0,  // 0 = uncapped
   depositedCapital: 0,  // Total user deposits (0 = auto-derive from maxUsdcDeployed - realizedPnL)
   maxUsdcDeployed: DEFAULT_MAX_USDC_DEPLOYED,
+  maxDeploymentPercent: 100, // Additional cap on new buys; 100 preserves existing fund behavior
   maxDrawdownPercent: 20,
   drawdownResetHours: 72, // Auto-reset peak after 72 hours (3 days) of drawdown pause
 

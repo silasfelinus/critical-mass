@@ -12,6 +12,7 @@
  */
 
 const { roundAsset, roundUSDC } = require('./volatility-utils');
+const { getEffectiveDeploymentCap } = require('./deployment-budget');
 const { getBaseCurrency } = require('./config-utils');
 const { createContextLogger } = require('./logger');
 
@@ -80,13 +81,14 @@ const createRiskManager = (exchange, config, productId) => {
    */
   const checkUSDCCap = (currentDeployed, entryUsdc) => {
     const newTotal = currentDeployed + entryUsdc;
+    const cap = getEffectiveDeploymentCap(config);
 
-    if (newTotal > config.maxUsdcDeployed) {
+    if (newTotal > cap) {
       return {
         allowed: false,
-        reason: `usdc_cap_exceeded:${roundUSDC(newTotal)}>${config.maxUsdcDeployed}`,
+        reason: `usdc_cap_exceeded:${roundUSDC(newTotal)}>${cap}`,
         currentUsdc: currentDeployed,
-        maxUsdc: config.maxUsdcDeployed,
+        maxUsdc: cap,
       };
     }
 
@@ -94,7 +96,7 @@ const createRiskManager = (exchange, config, productId) => {
       allowed: true,
       reason: null,
       currentUsdc: currentDeployed,
-      maxUsdc: config.maxUsdcDeployed,
+      maxUsdc: cap,
     };
   };
 
@@ -352,7 +354,7 @@ const createRiskManager = (exchange, config, productId) => {
    */
   const getRemainingCapacity = (position, currentPrice) => {
     const remainingAsset = config.maxAssetExposure ? roundAsset(config.maxAssetExposure - position.totalAsset) : Infinity;
-    const remainingUsdc = roundUSDC(config.maxUsdcDeployed - position.totalCostBasis);
+    const remainingUsdc = roundUSDC(getEffectiveDeploymentCap(config) - position.totalCostBasis);
     const remainingSteps = config.maxCycleBuys - position.cycleBuys;
 
     return {
@@ -370,7 +372,7 @@ const createRiskManager = (exchange, config, productId) => {
   const getUtilization = (position) => {
     return {
       btcUtilization: config.maxAssetExposure ? (position.totalAsset / config.maxAssetExposure) * 100 : 0,
-      usdcUtilization: config.maxUsdcDeployed > 0 ? (position.totalCostBasis / config.maxUsdcDeployed) * 100 : (position.totalCostBasis > 0 ? 100 : 0),
+      usdcUtilization: getEffectiveDeploymentCap(config) > 0 ? (position.totalCostBasis / getEffectiveDeploymentCap(config)) * 100 : (position.totalCostBasis > 0 ? 100 : 0),
       cycleBuysUtilization: (position.cycleBuys / config.maxCycleBuys) * 100,
     };
   };
@@ -386,7 +388,7 @@ const createRiskManager = (exchange, config, productId) => {
       config.maxAssetExposure
         ? `${assetLabel}=${position.totalAsset.toFixed(4)}/${config.maxAssetExposure}(${util.btcUtilization.toFixed(0)}%)`
         : `${assetLabel}=${position.totalAsset.toFixed(4)}`,
-      `usdc=$${position.totalCostBasis.toFixed(0)}/${config.maxUsdcDeployed}(${util.usdcUtilization.toFixed(0)}%)`,
+      `usdc=${position.totalCostBasis.toFixed(0)}/${getEffectiveDeploymentCap(config)}(${util.usdcUtilization.toFixed(0)}%)`,
       `buys=${position.cycleBuys}/${config.maxCycleBuys}`,
     ];
 
