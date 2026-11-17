@@ -102,9 +102,10 @@ function PositionCard({ position, apy, market, celestial, config, asset, isDryRu
             const usdPnL = position.realizedPnL || 0
             const assetPnL = position.realizedAssetPnL || 0
             const assetUsd = assetPnL * (market.lastPrice || 0)
-            // Percent should match the displayed USD figure: realized USD over what was actually deposited.
-            // Don't conflate with held-asset value at current price (volatile, grows with BTC price).
-            const denom = apy.depositedCapital || apy.originalCapital || apy.initialCapital || 0
+            // P&L percentage uses the internal accounting principal. In simulation
+            // that amount may be seeded from a budget, not actual exchange deposits.
+            // Don't conflate this with held-asset value at current market price.
+            const denom = apy.depositedCapital ?? apy.originalCapital ?? apy.initialCapital ?? 0
             const pct = denom > 0 ? (usdPnL / denom) * 100 : 0
             return <>
               <div className="text-gray-400 truncate">Realized P&L {pct ? `(${pct.toFixed(2)}%)` : ''}</div>
@@ -225,7 +226,9 @@ function PositionCard({ position, apy, market, celestial, config, asset, isDryRu
       {apy.engineStartTime && (
         <div className="mt-2 pt-2 border-t border-gray-700 text-xs">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-gray-400 mb-2">
-            <span>Deposited: ${(apy.depositedCapital || apy.originalCapital || apy.initialCapital)?.toLocaleString()}</span>
+            <span title={isDryRun ? 'Simulated accounting capital. Not evidence of an exchange deposit.' : 'Internal recorded principal; verify deposits against exchange transaction history.'}>
+              {isDryRun ? 'Paper capital' : 'Recorded principal'}: ${(apy.depositedCapital ?? apy.originalCapital ?? apy.initialCapital ?? 0).toLocaleString()}
+            </span>
             <span className="text-green-400">Max: ${(apy.maxUsdcDeployed || apy.currentCapital)?.toLocaleString()}</span>
             <CapitalAdjust apy={apy} exchange={exchange} pairQuery={pairQuery} fetchConfig={fetchConfig} fetchStatus={fetchStatus} addToast={addToast} />
             <span>Running: {apy.elapsedDays?.toFixed(1)}d</span>

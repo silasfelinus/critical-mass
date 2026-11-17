@@ -658,7 +658,9 @@ function Overview() {
               {(card.engineStartTime || card.isRunning) && (
                 <div className="mb-3 pt-2 border-t border-gray-700 text-xs">
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-gray-400 mb-2">
-                    <span>Deposited: {formatCurrency(card.depositedCapital)}</span>
+                    <span title={card.isDryRun ? 'Simulated accounting capital. Not evidence of an exchange deposit.' : 'Internal recorded principal; verify deposits against exchange transaction history.'}>
+                      {card.isDryRun ? 'Paper capital' : 'Recorded principal'}: {formatCurrency(card.depositedCapital)}
+                    </span>
                     <span className="text-green-400">Max: {formatCurrency(card.maxUsdcDeployed)}</span>
                     <span className="text-cyan-400">Avail: {formatCurrency(card.availableCapital)}</span>
                   </div>

@@ -48,6 +48,42 @@ afterEach(() => {
 })
 
 describe('Overview read failures', () => {
+  it.each([
+    [true, 'Paper capital: $10,000.00'],
+    [false, 'Recorded principal: $10,000.00'],
+  ])('never describes bot bookkeeping as a verified deposit (paper=%s)', async (isDryRun, expected) => {
+    fetch.mockImplementation(async (url) => {
+      if (url === '/api/exchanges') {
+        return { ok: true, json: async () => ({ exchanges: [{ name: 'coinbase', pair: 'BTC-USDC' }] }) }
+      }
+      if (url.includes('/coinbase/')) {
+        return {
+          ok: true,
+          json: async () => ({
+            status: {
+              ...status(100.15, 0),
+              isDryRun,
+              apy: {
+                deployedInPosition: 100.15,
+                engineStartTime: Date.now() - 60_000,
+                depositedCapital: 10_000,
+                initialCapital: 10_000,
+                maxUsdcDeployed: 100.15,
+                availableCapital: 0,
+                estimatedApy: 0,
+              },
+            },
+          }),
+        }
+      }
+      return { ok: true, json: async () => ({}) }
+    })
+
+    render(<Overview />)
+    expect(await screen.findByText(expected)).toBeTruthy()
+    expect(screen.queryByText(/Deposited:/)).toBeNull()
+  })
+
   it('shows an exchange error instead of the empty state and retries successfully', async () => {
     fetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ exchanges: [] }) })
