@@ -96,7 +96,8 @@ function createK8Auth({ authFile, readJSON, writeJSON, operatorAuth, now = Date.
     ]);
     const expected = process.env.K8_BRIDGE_TOKEN || '';
     const supplied = req.get?.('x-k8-bridge-token') || '';
-    if (allowed.has(req.method + ' ' + req.path) &&
+    const requestPath = req.originalUrl?.split('?')[0] || req.path;
+    if (allowed.has(req.method + ' ' + requestPath) &&
         expected.length >= 32 && safeEqual(expected, supplied)) {
       return { role: 'superkate', scope: record.scope ?? null, readonly: false };
     }
