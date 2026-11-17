@@ -1,9 +1,7 @@
 {
   "series": "K8 Wildlife",
-  "missing_levels": [
-    10
-  ],
-  "note": "Level 10 Dragon has been generated and the files are in their expected folders and names. Mobile/tablet are deliberate responsive crops of desktop art, not new AI paintings.",
+  "missing_levels": [],
+  "note": "All eleven K8 animal scenes have desktop, tablet, and mobile WebP files in this repository. Levels 0–9 use responsive crops; level 10 uses separately composed desktop, tablet and mobile images. Original reference photographs are not included.",
   "assets": [
     {
       "level": 0,
@@ -322,6 +320,38 @@
         "size": [
           720,
           1280
+        ]
+      }
+    },
+    {
+      "level": 10,
+      "name": "dragon",
+      "character_side": "right",
+      "desktop": {
+        "file": "10-dragon.webp",
+        "bytes": 261452,
+        "sha256": "5c293ef3f0587d96cc63fc05e6530390c9ff239d59dd56f317ca9783c5fc3050",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/10-dragon.webp",
+        "bytes": 355206,
+        "sha256": "6575f8b479b7a2bc3e92610d2109ddc34832e4bc0fb32c6c6b1ba5e3f31bbc10",
+        "size": [
+          1448,
+          1086
+        ]
+      },
+      "mobile": {
+        "file": "mobile/10-dragon.webp",
+        "bytes": 379684,
+        "sha256": "c8019f4d50e64a1037d207e4fdac4420791b770a56b891cb7c06531ac6a84ca0",
+        "size": [
+          941,
+          1672
         ]
       }
     }
