@@ -102,9 +102,10 @@ function PositionCard({ position, apy, market, celestial, config, asset, isDryRu
             const usdPnL = position.realizedPnL || 0
             const assetPnL = position.realizedAssetPnL || 0
             const assetUsd = assetPnL * (market.lastPrice || 0)
-            // Percent should match the displayed USD figure: realized USD over what was actually deposited.
-            // Don't conflate with held-asset value at current price (volatile, grows with BTC price).
-            const denom = apy.depositedCapital || apy.originalCapital || apy.initialCapital || 0
+            // P&L percentage uses the internal accounting principal. In simulation
+            // that amount may be seeded from a budget, not actual exchange deposits.
+            // Don't conflate this with held-asset value at current market price.
+            const denom = apy.depositedCapital ?? apy.originalCapital ?? apy.initialCapital ?? 0
             const pct = denom > 0 ? (usdPnL / denom) * 100 : 0
             return <>
               <div className="text-gray-400 truncate">Realized P&L {pct ? `(${pct.toFixed(2)}%)` : ''}</div>
