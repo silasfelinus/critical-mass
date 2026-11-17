@@ -213,8 +213,9 @@ function K8Experience({ session, onSignOut }) {
   }, [level, previousLevel])
   useEffect(() => {
     const candidateLevels = [level - 1, level + 1].filter(n => n >= 0 && n <= 10)
-    const nextVariant = window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches
-      ? 'mobile/' : window.matchMedia('(max-width: 1100px)').matches ? 'tablet/' : ''
+    const phone = window.matchMedia?.('(max-width: 600px) and (orientation: portrait)').matches ?? false
+    const tablet = window.matchMedia?.('(max-width: 1100px)').matches ?? false
+    const nextVariant = phone ? 'mobile/' : tablet ? 'tablet/' : ''
     candidateLevels.forEach(n => {
       const next = new Image()
       next.src = '/k8-animals/' + nextVariant + K8_ANIMALS[n].file
