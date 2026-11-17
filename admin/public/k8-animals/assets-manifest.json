@@ -1,0 +1,329 @@
+{
+  "series": "K8 Wildlife",
+  "missing_levels": [
+    10
+  ],
+  "note": "Level 10 Dragon has been generated and the files are in their expected folders and names. Mobile/tablet are deliberate responsive crops of desktop art, not new AI paintings.",
+  "assets": [
+    {
+      "level": 0,
+      "name": "anemone",
+      "character_side": "right",
+      "desktop": {
+        "file": "00-anemone.webp",
+        "bytes": 204020,
+        "sha256": "8062423141640c93dfba522f1902704f76f5f6225cafac609583d365cae7af37",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/00-anemone.webp",
+        "bytes": 142740,
+        "sha256": "b696a948c6e4af145e80cce405cbbd3c2a0db8f4ce8f15505b2d4dd6f2a535e7",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/00-anemone.webp",
+        "bytes": 159088,
+        "sha256": "e608302d3ddf8a3bfa0606740862fa1e55579949d4c3a3e83a7d6088076ff0d3",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 1,
+      "name": "snail",
+      "character_side": "left",
+      "desktop": {
+        "file": "01-snail.webp",
+        "bytes": 199482,
+        "sha256": "c249c522d43fab082ed31cf98a8d21805a5f5202312983440e7a74c5c6a1cbf4",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/01-snail.webp",
+        "bytes": 138462,
+        "sha256": "87998396ceed6e06c1787baa7c896b1d18d584ff145f4568dced43de58cd4903",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/01-snail.webp",
+        "bytes": 160598,
+        "sha256": "76a670c45074f7835286f140060639dd85338bfa5322a25822de4dc1e25d74d4",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 2,
+      "name": "sloth",
+      "character_side": "right",
+      "desktop": {
+        "file": "02-sloth.webp",
+        "bytes": 186712,
+        "sha256": "2a7e2798d67e218e2caa53de3fd7c1def8383a702ef8769601e427f71c389922",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/02-sloth.webp",
+        "bytes": 130644,
+        "sha256": "a9a9b699208038efdd06a9d76a377debe9c9de75175238684a59a83c7bb36405",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/02-sloth.webp",
+        "bytes": 144836,
+        "sha256": "58b200a160653a316ecc05ba81c3ad3791328ff7d15c8134116feaff1fbad380",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 3,
+      "name": "tortoise",
+      "character_side": "left",
+      "desktop": {
+        "file": "03-tortoise.webp",
+        "bytes": 217040,
+        "sha256": "daf4df01be862c1a9e94ca068f72acab75690cc95e1549ee814e952003c3b990",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/03-tortoise.webp",
+        "bytes": 149654,
+        "sha256": "d3e69a81e5a4c3d467e7d724d71cfe16687719bbca15799e3548b6d8eef1462a",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/03-tortoise.webp",
+        "bytes": 178032,
+        "sha256": "e0398e74d764cdf76cccda933892c4d74f3112abadf05ac5e0faacdd1ca5a307",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 4,
+      "name": "capybara",
+      "character_side": "right",
+      "desktop": {
+        "file": "04-capybara.webp",
+        "bytes": 231152,
+        "sha256": "61653714377da877170bce07d64a6df83b93a82c267bf01c4b5e2a91aa5f70a2",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/04-capybara.webp",
+        "bytes": 156514,
+        "sha256": "c18f9431c8e0ac322941e88a8e82cc061623eec4e00516576c548fa8632f8223",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/04-capybara.webp",
+        "bytes": 165844,
+        "sha256": "33d2cc68fd51b9f1dc19b64ef87d8d7b0e9d6d9dd7570042764b442f2b3e2f06",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 5,
+      "name": "otter",
+      "character_side": "left",
+      "desktop": {
+        "file": "05-otter.webp",
+        "bytes": 177066,
+        "sha256": "8396a7b37fd87175e015a05819f40cbd9d52f4498f91fa335e8291febd656062",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/05-otter.webp",
+        "bytes": 122622,
+        "sha256": "9b7dbd5e9c973179547f43e082da3588fac8117e2bfae6822a251d9b6554f9ad",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/05-otter.webp",
+        "bytes": 173794,
+        "sha256": "7f5d9b56532bcac43892cf0c4024b05dcb47c8f3fdf4d772b06df342f95bce8d",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 6,
+      "name": "fox",
+      "character_side": "right",
+      "desktop": {
+        "file": "06-fox.webp",
+        "bytes": 193904,
+        "sha256": "e36aeff6e6417952d6eed7389f197326f04dfc1f25fbd853d62d6a9a38ffb142",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/06-fox.webp",
+        "bytes": 132126,
+        "sha256": "7912faa6a52d1bbf4e2e8d1a59e3eb2900399768e8c4d594218c7ab0277451c5",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/06-fox.webp",
+        "bytes": 134804,
+        "sha256": "de936e6839fbea88138f863e7696e1b3cb42dbf08394c73e4f5935fc3554d11e",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 7,
+      "name": "cheetah",
+      "character_side": "left",
+      "desktop": {
+        "file": "07-cheetah.webp",
+        "bytes": 208456,
+        "sha256": "fb6df41ff9f4f045e733206116b2508aadc2eac7e4af7e5e00436619dbfe9701",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/07-cheetah.webp",
+        "bytes": 138424,
+        "sha256": "33a38eb8264ea5ea2d80bd9f5c0b189f287b1e298bf7a3e98187add7d87ddc7e",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/07-cheetah.webp",
+        "bytes": 155532,
+        "sha256": "0938e4bec8a2ac33e79c16f4ecb03dbcd1096bc355c2fc8ff55594486b812a8a",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 8,
+      "name": "honey-badger",
+      "character_side": "right",
+      "desktop": {
+        "file": "08-honey-badger.webp",
+        "bytes": 285376,
+        "sha256": "70a1e7fc944ad15d9548291f75d42d8ce6cf0e0176b01756ca2b07567c7900da",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/08-honey-badger.webp",
+        "bytes": 192288,
+        "sha256": "e132677c79eb22657ff97f031168146d27bb037ffb8bc48269386033b8cfb512",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/08-honey-badger.webp",
+        "bytes": 204070,
+        "sha256": "f3544e56bb124e71502c1bac76ceb6e389bcdc0cef0e24a50ec169511f88ba6e",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    },
+    {
+      "level": 9,
+      "name": "phoenix",
+      "character_side": "left",
+      "desktop": {
+        "file": "09-phoenix.webp",
+        "bytes": 194320,
+        "sha256": "0923932b3235fb3ac57260c83d11acdf11d52ddc4f88a17dbf35f57768640aeb",
+        "size": [
+          1672,
+          941
+        ]
+      },
+      "tablet": {
+        "file": "tablet/09-phoenix.webp",
+        "bytes": 127438,
+        "sha256": "b8ad15ce900cc7b01283d6a6933f4f817ae23aa50866f5b9efb30850ad705a52",
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "mobile": {
+        "file": "mobile/09-phoenix.webp",
+        "bytes": 151606,
+        "sha256": "edd8e87dab9c53662b1984fcb92e144d3575dc4b97eba9e9d966b9611b3f5030",
+        "size": [
+          720,
+          1280
+        ]
+      }
+    }
+  ]
+}
