@@ -355,6 +355,75 @@
   border: 0;
 }
 
+.k8-profile-label,
+.k8-profile-field > span {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffe7b3;
+}
+
+.k8-immersive-panel input[type="number"] {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.5rem 0.65rem;
+  color: #fff;
+  background: #120d23;
+  border: 1px solid #c8a6d7;
+  border-radius: 0.4rem;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.k8-immersive-panel input[type="number"]:focus-visible {
+  outline: 2px solid #ffe49e;
+  outline-offset: 2px;
+}
+
+.k8-profile-advanced {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.6rem 0;
+}
+
+.k8-profile-field {
+  display: grid;
+  grid-template-columns: 1fr minmax(5rem, 8rem);
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.k8-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+}
+
+.k8-profile-actions button {
+  flex: 1;
+  padding: 0.55rem;
+  border: 1px solid #ffe1a0;
+  border-radius: 0.5rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.k8-profile-actions button:first-child {
+  background: #ffe49e;
+  color: #281834;
+}
+
+.k8-profile-actions button:disabled {
+  opacity: 0.5;
+}
+
+.k8-profile-summary {
+  font-size: 0.72rem;
+  color: #dfd0e9;
+}
+
 @media (max-width: 800px) {
   .k8-immersive { --k8-dock-height: 212px; }
   .k8-immersive-top { padding: max(0.4rem, env(safe-area-inset-top)) 0.75rem; }
