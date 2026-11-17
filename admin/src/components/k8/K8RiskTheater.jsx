@@ -181,15 +181,27 @@ export default function K8RiskTheater({ exchange, pair, strategy }) {
       <div className="k8-backdrop" aria-hidden="true" />
       <div className="k8-art" aria-hidden="true">
         <span className="k8-art-fallback">{animal.emoji}</span>
-        <img
-          key={animal.file}
-          src={'/k8-animals/' + animal.file}
-          alt=""
-          draggable="false"
-          className={'k8-art-image' + (imageLoaded ? ' k8-art-image--loaded' : '')}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageLoaded(false)}
-        />
+        <picture>
+          <source
+            media="(max-width: 600px) and (orientation: portrait)"
+            srcSet={'/k8-animals/mobile/' + animal.file}
+            type="image/webp"
+          />
+          <source
+            media="(max-width: 1100px)"
+            srcSet={'/k8-animals/tablet/' + animal.file}
+            type="image/webp"
+          />
+          <img
+            key={animal.file}
+            src={'/k8-animals/' + animal.file}
+            alt=""
+            draggable="false"
+            className={'k8-art-image' + (imageLoaded ? ' k8-art-image--loaded' : '')}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(false)}
+          />
+        </picture>
       </div>
 
       <div className="k8-top">
