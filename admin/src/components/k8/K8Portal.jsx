@@ -146,13 +146,13 @@ const money = value =>
     ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
     : 'Unavailable'
 
-const animalSummary = level => {
+const animalSummary = (level, percent = level * 10) => {
   if (level === 0) return 'Trading engine stopped. Existing orders and holdings may remain.'
-  if (level <= 2) return 'Quiet, deliberate entries. The slow lane still carries investment risk.'
-  if (level <= 4) return 'Measured entries, with room for the occasional opportunity.'
-  if (level <= 6) return 'Balanced curiosity. More frequent trade entries may be possible.'
-  if (level <= 8) return 'Eager market entries, with higher activity and greater risk.'
-  return 'Maximum entry aggressiveness. Capital limits stay unchanged.'
+  if (level <= 2) return `Quiet entries, up to ${percent}% of the authorized fund budget. Still exposed to losses.`
+  if (level <= 4) return `Measured entries, up to ${percent}% of the authorized fund budget.`
+  if (level <= 6) return `Balanced activity, up to ${percent}% of the authorized fund budget.`
+  if (level <= 8) return `Faster entries, up to ${percent}% of the authorized fund budget.`
+  return `Maximum entry aggressiveness, up to ${percent}% of the authorized fund budget.`
 }
 
 function K8Artwork({ animal, layer = 'incoming' }) {
@@ -183,13 +183,27 @@ function K8Experience({ session, onSignOut }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileDraft, setProfileDraft] = useState({})
+  const [profileError, setProfileError] = useState('')
   const admin = session.role === 'admin'
   const animal = K8_ANIMALS[level]
   const applied = snapshot?.appliedLevel
   const previewParams = useMemo(
-    () => riskParams(level, snapshot?.presets),
-    [level, snapshot?.presets],
+    () => riskParams(level, snapshot?.presets, snapshot?.levelOverrides),
+    [level, snapshot?.presets, snapshot?.levelOverrides],
   )
+
+  const baseParams = useMemo(
+    () => riskParams(level, snapshot?.presets), [level, snapshot?.presets],
+  )
+  useEffect(() => {
+    if (previewParams) setProfileDraft(Object.fromEntries(
+      Object.entries(previewParams).filter(([key]) => key !== 'aggressiveness'),
+    ))
+    else setProfileDraft({})
+    setProfileError('')
+  }, [level, previewParams])
 
   const load = useCallback(async ({ keepPreview = false } = {}) => {
     setLoading(true)
@@ -252,6 +266,27 @@ function K8Experience({ session, onSignOut }) {
     await load({ keepPreview: true })
   }
 
+  const saveProfile = async (reset = false) => {
+    if (admin || level === 0 || !snapshot || profileSaving || !previewParams || !baseParams) return
+    setProfileSaving(true)
+    setProfileError('')
+    const overrides = reset ? null : Object.fromEntries(
+      Object.entries(profileDraft).filter(([key, value]) =>
+        key !== 'aggressiveness' && value !== baseParams[key]),
+    )
+    const response = await apiPut('/api/k8/fund/levels', {
+      level, overrides, fingerprint: snapshot.fingerprint,
+    })
+    setProfileSaving(false)
+    if (!response.ok) {
+      setProfileError(describeMutationFailure(response, 'Could not save animal profile'))
+      await load({ keepPreview: true })
+      return
+    }
+    setNotice('Animal profile saved. Confirm Apply separately to change live strategy settings.')
+    await load({ keepPreview: true })
+  }
+
   const metrics = snapshot?.metrics
   const holding = Number.isFinite(metrics?.heldAsset)
     ? metrics.heldAsset.toFixed(6) + ' ' + (metrics.asset || 'BTC')
@@ -292,7 +327,7 @@ function K8Experience({ session, onSignOut }) {
         <div className="k8-immersive-numeral">{String(level).padStart(2, '0')}<small>/10</small></div>
         <h1>K8 THE {animal.name.toUpperCase()}</h1>
         <p className="k8-immersive-quote">“{animal.mood}”</p>
-        <p className="k8-immersive-description">{animalSummary(level)}</p>
+        <p className="k8-immersive-description">{animalSummary(level, previewParams?.maxDeploymentPercent)}</p>
       </div>
 
       <aside className="k8-immersive-dock" aria-label="K8 risk selector">
@@ -312,7 +347,7 @@ function K8Experience({ session, onSignOut }) {
         </div>
         <div className="k8-immersive-scale-label">
           <label htmlFor="k8-risk-slider">Risk animal</label>
-          <span>{level === applied ? 'CURRENT SELECTION' : 'PREVIEW · NOT APPLIED'}</span>
+          <span>{level === 0 ? 'ENGINE STOP' : `${previewParams?.maxDeploymentPercent ?? level * 10}% MAX DEPLOYED`} · {level === applied ? 'CURRENT' : 'PREVIEW'}</span>
         </div>
         <input
           id="k8-risk-slider"
@@ -370,7 +405,7 @@ function K8Experience({ session, onSignOut }) {
                 Confirm level {level} for {snapshot?.scope?.exchange} / {snapshot?.scope?.pair}.
                 {snapshot?.status?.isDryRun === false ? ' Live-money mode.' : ' Simulation mode.'}
               </p>
-              <p>Level 0 stops the engine, not the holdings. Higher levels change trade entry parameters, not the dollar cap. Crypto can lose its full value.</p>
+              <p>Level 0 stops the engine, not the holdings. Other levels set trading speed and a {previewParams?.maxDeploymentPercent ?? level * 10}% cap on NEW buy exposure (up to {money(snapshot?.config?.maxUsdcDeployed * (previewParams?.maxDeploymentPercent ?? level * 10) / 100)}). They never raise the authorized fund ceiling. Existing positions and resting buy orders are not automatically sold or cancelled. Crypto can lose its full value.</p>
               <div className="k8-confirm-actions">
                 <button type="button" onClick={() => setPanel('')} disabled={saving}>Cancel</button>
                 <button type="button" onClick={apply} disabled={saving}>
