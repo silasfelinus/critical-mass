@@ -127,7 +127,7 @@ describe('K8 immersive animal portfolio', () => {
       allocatedQuote: 30,
       pendingBuyOrders: 1,
     })
-    await screen.findByRole('heading', { name: 'K8 THE SLOTH' })
+    await screen.findByText('$600.00')
     fireEvent.click(screen.getByRole('button', { name: /Settings/ }))
     const input = screen.getByLabelText('Maximum fund deployment (% of authorized budget)')
     expect(input.value).toBe('20')
@@ -146,7 +146,7 @@ describe('K8 immersive animal portfolio', () => {
 
   it('keeps K8 profile editing disabled in administrator preview', async () => {
     setup('admin', { ...snapshot, presets: editablePresets, levelOverrides: {} })
-    await screen.findByRole('heading', { name: 'K8 THE SLOTH' })
+    await screen.findByText('$600.00')
     fireEvent.click(screen.getByRole('button', { name: /Settings/ }))
     expect(screen.getByLabelText('Maximum fund deployment (% of authorized budget)').disabled).toBe(true)
     expect(screen.queryByRole('button', { name: 'Save animal settings' })).toBeNull()
