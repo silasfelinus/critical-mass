@@ -388,7 +388,7 @@ const createRiskManager = (exchange, config, productId) => {
       config.maxAssetExposure
         ? `${assetLabel}=${position.totalAsset.toFixed(4)}/${config.maxAssetExposure}(${util.btcUtilization.toFixed(0)}%)`
         : `${assetLabel}=${position.totalAsset.toFixed(4)}`,
-      `usdc=${position.totalCostBasis.toFixed(0)}/${getEffectiveDeploymentCap(config)}(${util.usdcUtilization.toFixed(0)}%)`
+      `usdc=${position.totalCostBasis.toFixed(0)}/${getEffectiveDeploymentCap(config)}(${util.usdcUtilization.toFixed(0)}%)`,
       `buys=${position.cycleBuys}/${config.maxCycleBuys}`,
     ];
 
