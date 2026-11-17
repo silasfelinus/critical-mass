@@ -3,6 +3,7 @@ import { K8_ANIMALS, riskParams } from './k8Risk.mjs'
 import { apiGet, apiPost, apiPut, apiDelete, describeMutationFailure } from '../../utils/apiClient'
 import './k8-theater.css'
 import './k8-portal.css'
+import './k8-immersive.css'
 
 const currency = value => Number.isFinite(value) ? '$' + value.toLocaleString('en-US') : 'Not set'
 const readable = value => Number.isFinite(value) ? value.toLocaleString('en-US', { maximumFractionDigits: 3 }) : 'N/A'
