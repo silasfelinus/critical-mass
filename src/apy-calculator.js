@@ -15,8 +15,10 @@ const { DEFAULT_MAX_USDC_DEPLOYED } = require('./fund-defaults');
  *
  * Glossary (capital fields are unfortunately overloaded — fixing names
  * elsewhere is a bigger refactor, so each is documented here):
- *   - depositedCapital: USD the user actually moved into the bot. The
- *     denominator for ALL return percentages — this is your principal.
+ *   - depositedCapital: internal accounting principal (not verified cash
+ *     transfers). It may be explicitly configured or auto-seeded from the
+ *     budget on a first run, including in dry-run simulation. The denominator
+ *     for return percentages uses this bookkeeping basis.
  *   - maxUsdcDeployed: budget cap the bot can deploy at any time. May exceed
  *     depositedCapital if the user has authorized leveraging realized profits.
  *   - initialCapital, originalCapital, currentCapital: legacy aliases kept
