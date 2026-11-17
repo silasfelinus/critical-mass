@@ -85,6 +85,22 @@ function createK8Auth({ authFile, readJSON, writeJSON, operatorAuth, now = Date.
     const admin = await operatorAuth.authenticate(req.headers || {}, req.socket?.remoteAddress);
     if (admin) return { role: 'admin', scope: record.scope ?? null, readonly: true };
     if (checkKateSession(req)) return { role: 'superkate', scope: record.scope, readonly: false };
+
+    // Dedicated, fund-scoped machine integration. This secret is configured
+    // outside the repository; it cannot authenticate any generic operator API,
+    // session, invitation, or K8 administration endpoint.
+    const allowed = new Set([
+      'GET /api/k8/fund',
+      'PUT /api/k8/fund/risk',
+      'PUT /api/k8/fund/levels',
+    ]);
+    const expected = process.env.K8_BRIDGE_TOKEN || '';
+    const supplied = req.get?.('x-k8-bridge-token') || '';
+    const requestPath = req.originalUrl?.split('?')[0] || req.path;
+    if (allowed.has(req.method + ' ' + requestPath) &&
+        expected.length >= 32 && safeEqual(expected, supplied)) {
+      return { role: 'superkate', scope: record.scope ?? null, readonly: false };
+    }
     return null;
   };
   const requireK8 = async (req, res, next) => {
