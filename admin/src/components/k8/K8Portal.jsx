@@ -140,172 +140,277 @@ function AdminInvitation({ scope, onClose }) {
   )
 }
 
+const money = value =>
+  Number.isFinite(value)
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value)
+    : 'Unavailable'
+
+const animalSummary = level => {
+  if (level === 0) return 'Trading engine stopped. Existing orders and holdings may remain.'
+  if (level <= 2) return 'Quiet, deliberate entries. The slow lane still carries investment risk.'
+  if (level <= 4) return 'Measured entries, with room for the occasional opportunity.'
+  if (level <= 6) return 'Balanced curiosity. More frequent trade entries may be possible.'
+  if (level <= 8) return 'Eager market entries, with higher activity and greater risk.'
+  return 'Maximum entry aggressiveness. Capital limits stay unchanged.'
+}
+
+function K8Artwork({ animal, layer = 'incoming' }) {
+  return (
+    <picture className={'k8-immersive-scene k8-immersive-scene--' + layer}>
+      <source
+        media="(max-width: 600px) and (orientation: portrait)"
+        srcSet={'/k8-animals/mobile/' + animal.file}
+        type="image/webp"
+      />
+      <source
+        media="(max-width: 1100px)"
+        srcSet={'/k8-animals/tablet/' + animal.file}
+        type="image/webp"
+      />
+      <img src={'/k8-animals/' + animal.file} alt="" draggable="false" />
+    </picture>
+  )
+}
+
 function K8Experience({ session, onSignOut }) {
   const [snapshot, setSnapshot] = useState(null)
   const [level, setLevel] = useState(2)
-  const [mode, setMode] = useState('simple')
-  const [inviting, setInviting] = useState(false)
-  const [confirmation, setConfirmation] = useState(false)
+  const [previousLevel, setPreviousLevel] = useState(null)
+  const [panel, setPanel] = useState('')
+  const [details, setDetails] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [artReady, setArtReady] = useState(false)
   const admin = session.role === 'admin'
   const animal = K8_ANIMALS[level]
-  const previewParams = useMemo(() => riskParams(level, snapshot?.presets), [level, snapshot?.presets])
   const applied = snapshot?.appliedLevel
-  const actual = snapshot?.savedLevel
+  const previewParams = useMemo(
+    () => riskParams(level, snapshot?.presets),
+    [level, snapshot?.presets],
+  )
 
   const load = useCallback(async ({ keepPreview = false } = {}) => {
     setLoading(true)
     const result = await apiGet('/api/k8/fund')
     setLoading(false)
     if (!result.ok) {
-      setError(result.error || 'Unable to read this fund')
+      setError(result.error || 'Fund status is unavailable')
+      setSnapshot(null)
       return
     }
     setSnapshot(result.data)
     setError('')
     if (!keepPreview) setLevel(result.data.appliedLevel ?? 2)
   }, [])
-  useEffect(() => { load() }, [load])
-  useEffect(() => { setArtReady(false); setConfirmation(false) }, [level])
+
+  useEffect(() => { void load() }, [load])
+  useEffect(() => {
+    if (previousLevel === null) return undefined
+    const timer = window.setTimeout(() => setPreviousLevel(null), 650)
+    return () => window.clearTimeout(timer)
+  }, [level, previousLevel])
+  useEffect(() => {
+    const candidateLevels = [level - 1, level + 1].filter(n => n >= 0 && n <= 10)
+    const nextVariant = window.matchMedia('(max-width: 600px) and (orientation: portrait)').matches
+      ? 'mobile/' : window.matchMedia('(max-width: 1100px)').matches ? 'tablet/' : ''
+    candidateLevels.forEach(n => {
+      const next = new Image()
+      next.src = '/k8-animals/' + nextVariant + K8_ANIMALS[n].file
+    })
+  }, [level])
+
+  const selectLevel = raw => {
+    const next = Number(raw)
+    if (!Number.isInteger(next) || next < 0 || next > 10 || next === level) return
+    setPreviousLevel(level)
+    setLevel(next)
+    setPanel('')
+    setNotice('')
+  }
 
   const apply = async () => {
-    if (admin || saving || !snapshot || !confirmation || loading) return
+    if (admin || saving || !snapshot || panel !== 'confirm' || loading) return
     setSaving(true)
     setNotice('')
     const result = await apiPut('/api/k8/fund/risk', {
       level, fingerprint: snapshot.fingerprint,
     })
     setSaving(false)
-    setConfirmation(false)
+    setPanel('')
     if (!result.ok) {
       setNotice(describeMutationFailure(result, 'Could not apply setting'))
       await load({ keepPreview: true })
       return
     }
     setNotice(level === 0
-      ? 'Stop acknowledged. Existing positions and orders may remain.'
-      : 'Level ' + level + ' settings confirmed. ' + (snapshot.status.isRunning ? 'Engine running.' : 'Engine remains stopped until an operator starts it.'))
+      ? 'Engine stop confirmed; holdings and existing orders may remain.'
+      : 'Level ' + level + ' confirmed. ' +
+        (snapshot.status.isRunning ? 'Engine running.' : 'Engine remains stopped.'))
     await load({ keepPreview: true })
   }
 
+  const metrics = snapshot?.metrics
+  const holding = Number.isFinite(metrics?.heldAsset)
+    ? metrics.heldAsset.toFixed(6) + ' ' + (metrics.asset || 'BTC')
+    : 'Unavailable'
+  const currentName = applied === null
+    ? 'Custom'
+    : Number.isInteger(applied)
+      ? K8_ANIMALS[applied].name
+      : 'Unavailable'
+
   return (
-    <section className={'k8-theater k8-theater--' + animal.place} aria-label="K8 Wildlife risk selector">
-      <div className="k8-backdrop" aria-hidden="true" />
-      <div className="k8-art" aria-hidden="true">
-        <span className="k8-art-fallback">{animal.emoji}</span>
-        <picture>
-          <source media="(max-width: 600px) and (orientation: portrait)" srcSet={'/k8-animals/mobile/' + animal.file} />
-          <source media="(max-width: 1100px)" srcSet={'/k8-animals/tablet/' + animal.file} />
-          <img
-            key={animal.file}
-            src={'/k8-animals/' + animal.file}
-            alt=""
-            className={'k8-art-image' + (artReady ? ' k8-art-image--loaded' : '')}
-            draggable="false"
-            onLoad={() => setArtReady(true)}
-            onError={() => setArtReady(false)}
-          />
-        </picture>
+    <main className={'k8-theater k8-immersive k8-immersive--' + animal.place}>
+      <div className="k8-immersive-visual" aria-hidden="true">
+        {previousLevel !== null &&
+          <K8Artwork key={'out-' + previousLevel} animal={K8_ANIMALS[previousLevel]} layer="outgoing" />}
+        <K8Artwork key={'in-' + level} animal={animal} />
+      </div>
+      <div className="k8-immersive-vignette" aria-hidden="true" />
+
+      <header className="k8-immersive-top">
+        <span className="k8-immersive-mark">K8 <span>WILDLIFE</span></span>
+        <div className="k8-immersive-toplinks">
+          {admin && <span className="k8-immersive-preview">Admin preview · read-only</span>}
+          <span className={snapshot?.status?.isDryRun === false
+            ? 'k8-status k8-status--live' : 'k8-status'}>
+            {loading ? 'Checking' : snapshot?.status?.isDryRun === false ? 'Live' : 'Dry run / unknown'}
+          </span>
+          <a href="/" className="k8-immersive-link" aria-label="Open full Critical Mass dashboard">
+            Critical Mass <span aria-hidden="true">↗</span>
+          </a>
+          {!admin && <button type="button" className="k8-immersive-link" onClick={onSignOut}>Sign out</button>}
+        </div>
+      </header>
+
+      <div className={'k8-immersive-story k8-immersive-story--' + animal.place}
+        key={'story-' + level} aria-live="polite">
+        <span className="k8-immersive-overline">YOUR FINANCIAL SPIRIT ANIMAL</span>
+        <div className="k8-immersive-numeral">{String(level).padStart(2, '0')}<small>/10</small></div>
+        <h1>K8 THE {animal.name.toUpperCase()}</h1>
+        <p className="k8-immersive-quote">“{animal.mood}”</p>
+        <p className="k8-immersive-description">{animalSummary(level)}</p>
       </div>
 
-      <header className="k8-top">
-        {admin ? <a className="k8-back" href="/">← Admin dashboard</a>
-          : <button type="button" className="k8-back" onClick={onSignOut}>Sign out</button>}
-        <span className="k8-brand">K8 / THE WILDLIFE PORTFOLIO</span>
-        <span className={'k8-status ' + (snapshot?.status?.isDryRun === false ? 'k8-status--live' : '')}>
-          {loading ? 'CHECKING ENGINE' : snapshot?.status?.isDryRun === false ? 'LIVE MONEY' : 'DRY RUN / UNKNOWN'}
-        </span>
-      </header>
-      <div className="k8-content">
-        <div className="k8-story" aria-live="polite">
-          <span className="k8-eyebrow">CHOOSE YOUR FINANCIAL SPIRIT ANIMAL</span>
-          <div className="k8-number">{String(level).padStart(2, '0')}<span>/10</span></div>
-          <h1>K8 THE {animal.name.toUpperCase()}</h1>
-          <p className="k8-tagline">“{animal.mood}”</p>
-          <div className="k8-story-divider" />
-          <div className="k8-descriptor">{level === 0 ? 'Engine stop' : 'Trading aggressiveness'}</div>
-          <p className="k8-explanation">This dial changes trade-entry behavior, not the dollar cap or deposits. All crypto can lose its full value.</p>
+      <aside className="k8-immersive-dock" aria-label="K8 risk selector">
+        <div className="k8-immersive-facts">
+          <div className="k8-immersive-fact">
+            <span>Saved level</span><strong>{currentName}{Number.isInteger(applied) ? ' · ' + applied : ''}</strong>
+          </div>
+          <div className="k8-immersive-fact">
+            <span>Tracked position value</span><strong>{money(metrics?.positionValueQuote)}</strong>
+          </div>
+          <div className="k8-immersive-fact">
+            <span>{metrics?.asset || 'BTC'} held</span><strong>{holding}</strong>
+          </div>
+          <div className="k8-immersive-fact">
+            <span>Realized P&L</span><strong>{money(metrics?.realizedPnlQuote)}</strong>
+          </div>
         </div>
-
-        <div className="k8-console">
-          {admin && (
-            <p className="k8-admin-preview">
-              <strong>ADMIN PREVIEW</strong> · You are viewing K8's real saved setting. Exploring animals here cannot submit changes.
-            </p>
-          )}
-          <div className="k8-console-heading">
-            <span>THE K8-O-METER</span>
-            <span>{snapshot?.scope ? snapshot.scope.exchange + ' / ' + snapshot.scope.pair : 'No fund assigned'}</span>
-          </div>
-          <input className="k8-range" type="range" min="0" max="10" step="1"
-            aria-label="Preview risk level" value={level} onChange={event => setLevel(Number(event.target.value))} />
-          <div className="k8-ticks">
-            {K8_ANIMALS.map((item, index) => (
-              <button type="button" key={index}
-                aria-label={index + ': ' + item.name} aria-pressed={level === index}
-                className={'k8-tick' + (level === index ? ' k8-tick--active' : '')}
-                onClick={() => setLevel(index)}>{index}</button>
-            ))}
-          </div>
-          <div className="k8-readout">
-            <div><span>Actual setting</span><strong>{loading ? 'Loading' : applied === null ? 'Custom' : applied ?? 'Unknown'}</strong></div>
-            <div><span>Capital cap (unchanged)</span><strong>{currency(snapshot?.config?.maxUsdcDeployed)}</strong></div>
-            <div><span>Drawdown guard (unchanged)</span><strong>{readable(snapshot?.config?.maxDrawdownPercent)}%</strong></div>
-          </div>
-          <div className="k8-mode">
-            <button type="button" aria-pressed={mode === 'simple'} onClick={() => setMode('simple')}>Simple</button>
-            <button type="button" aria-pressed={mode === 'deep'} onClick={() => setMode('deep')}>Deep settings</button>
-          </div>
-          {mode === 'simple' ? (
-            <p className="k8-explain-mini">Level {level === 0 ? '0 stops the engine but does not liquidate existing positions.' : level + ' changes how eagerly the bot places buys. Limits stay fixed.'}</p>
+        <div className="k8-immersive-scale-label">
+          <label htmlFor="k8-risk-slider">Risk animal</label>
+          <span>{level === applied ? 'CURRENT SELECTION' : 'PREVIEW · NOT APPLIED'}</span>
+        </div>
+        <input
+          id="k8-risk-slider"
+          className="k8-range"
+          type="range"
+          min="0"
+          max="10"
+          step="1"
+          aria-valuetext={'Level ' + level + ', ' + animal.name}
+          value={level}
+          onChange={event => selectLevel(event.target.value)}
+        />
+        <div className="k8-ticks">
+          {K8_ANIMALS.map((item, index) => (
+            <button key={item.file} type="button"
+              aria-label={index + ': ' + item.name} aria-pressed={level === index}
+              className={'k8-tick' + (level === index ? ' k8-tick--active' : '')}
+              onClick={() => selectLevel(index)}>{index}</button>
+          ))}
+        </div>
+        <div className="k8-immersive-actions">
+          {admin ? (
+            <span className="k8-immersive-readonly">Preview mode · changes disabled</span>
           ) : (
-            <div className="k8-deep" aria-label="Read-only detailed risk parameters">
-              <p>Inspect the strategy values behind the dial. Advanced values are read-only; a change to the risk level uses the same confirmation as Simple mode.</p>
-              <dl>
-                <div><dt>Minimum entry interval</dt><dd>{readable(previewParams?.minIntervalMs)} ms</dd></div>
-                <div><dt>Maximum buys per cycle</dt><dd>{readable(previewParams?.maxCycleBuys)}</dd></div>
-                <div><dt>Entry offset</dt><dd>{readable(previewParams?.entryOffsetBps)} bps</dd></div>
-                <div><dt>Trend scale</dt><dd>{readable(previewParams?.trendScale)}</dd></div>
-                <div><dt>Actual configured level</dt><dd>{actual === null ? 'Custom settings' : actual ?? 'Not loaded'}</dd></div>
-              </dl>
-            </div>
-          )}
-          {error && <p role="alert" className="k8-notice k8-notice--error">{error}</p>}
-          {notice && <p role="status" className="k8-notice">{notice}</p>}
-          {!admin && !confirmation && (
-            <button className="k8-action" type="button"
+            <button type="button" className="k8-immersive-apply"
               disabled={loading || saving || !snapshot || level === applied}
-              onClick={() => setConfirmation(true)}>
-              {level === applied ? 'This is your current setting' : level === 0 ? 'Review engine stop' : 'Review level ' + level + ' change'}
+              onClick={() => setPanel('confirm')}>
+              {level === applied ? 'Current setting' : 'Review level ' + level}
             </button>
           )}
-          {confirmation && !admin && (
-            <div className="k8-confirm" role="group" aria-label="Confirm risk setting">
-              <p>You are requesting <strong>level {level} ({animal.name})</strong> for real trading parameters on {snapshot?.scope?.exchange} / {snapshot?.scope?.pair}.</p>
-              <p>{snapshot?.status?.isDryRun === false ? 'LIVE-MONEY MODE. ' : 'Dry-run mode. '}No guarantee of returns. This does not raise the capital limit, add funds, or liquidate positions.</p>
+          <button type="button" className="k8-immersive-settings"
+            aria-expanded={panel === 'settings'}
+            onClick={() => setPanel(panel === 'settings' ? '' : 'settings')}>
+            Settings <span aria-hidden="true">⚙</span>
+          </button>
+          {admin && <button type="button" className="k8-immersive-settings"
+            onClick={() => setPanel(panel === 'invite' ? '' : 'invite')}>Invite K8</button>}
+        </div>
+        {(error || notice) && (
+          <p role={error ? 'alert' : 'status'} className={'k8-immersive-toast' + (error ? ' k8-immersive-toast--error' : '')}>
+            {error || notice}
+          </p>
+        )}
+      </aside>
+
+      {panel && (
+        <div className="k8-immersive-panel" role="dialog"
+          aria-label={panel === 'confirm' ? 'Confirm new risk setting' : panel === 'invite' ? 'Invite K8' : 'Risk settings'}>
+          <button type="button" className="k8-immersive-panel-close"
+            aria-label="Close panel" onClick={() => setPanel('')}>×</button>
+          {panel === 'confirm' && (
+            <div className="k8-confirm">
+              <h2>Make {animal.name} your risk animal?</h2>
+              <p>
+                Confirm level {level} for {snapshot?.scope?.exchange} / {snapshot?.scope?.pair}.
+                {snapshot?.status?.isDryRun === false ? ' Live-money mode.' : ' Simulation mode.'}
+              </p>
+              <p>Level 0 stops the engine, not the holdings. Higher levels change trade entry parameters, not the dollar cap. Crypto can lose its full value.</p>
               <div className="k8-confirm-actions">
-                <button type="button" onClick={() => setConfirmation(false)} disabled={saving}>Cancel</button>
-                <button type="button" disabled={saving} onClick={apply}>{saving ? 'Applying…' : 'Confirm level ' + level}</button>
+                <button type="button" onClick={() => setPanel('')} disabled={saving}>Cancel</button>
+                <button type="button" onClick={apply} disabled={saving}>
+                  {saving ? 'Applying…' : 'Confirm level ' + level}
+                </button>
               </div>
             </div>
           )}
-          {admin && (
-            <div className="k8-admin-tools">
-              <a href="/k8/login-preview" className="k8-back">Preview K8 sign-in</a>
-              <button type="button" className="k8-back" onClick={() => setInviting(v => !v)}>
-                {inviting ? 'Close invitation' : 'Create K8 invitation'}
-              </button>
+          {panel === 'invite' && admin && (
+            <AdminInvitation scope={snapshot?.scope || session.scope} onClose={() => setPanel('')} />
+          )}
+          {panel === 'settings' && (
+            <div className="k8-immersive-details">
+              <h2>Portfolio details</h2>
+              <div className="k8-mode">
+                <button type="button" aria-pressed={!details} onClick={() => setDetails(false)}>Simple</button>
+                <button type="button" aria-pressed={details} onClick={() => setDetails(true)}>Deep</button>
+              </div>
+              {!details ? (
+                <dl className="k8-immersive-data">
+                  <div><dt>Investment cap</dt><dd>{money(snapshot?.config?.maxUsdcDeployed)}</dd></div>
+                  <div><dt>Drawdown guard</dt><dd>{snapshot?.config?.maxDrawdownPercent ?? 'Unavailable'}%</dd></div>
+                  <div><dt>Exchange balance</dt><dd>{money(metrics?.accountBalanceQuote)}</dd></div>
+                  <div><dt>Trading status</dt><dd>{snapshot?.status?.isRunning ? 'Running' : 'Stopped / unavailable'}</dd></div>
+                </dl>
+              ) : (
+                <dl className="k8-immersive-data">
+                  <div><dt>Minimum entry interval</dt><dd>{previewParams?.minIntervalMs ?? '–'} ms</dd></div>
+                  <div><dt>Maximum buys per cycle</dt><dd>{previewParams?.maxCycleBuys ?? '–'}</dd></div>
+                  <div><dt>Entry offset</dt><dd>{previewParams?.entryOffsetBps ?? '–'} bps</dd></div>
+                  <div><dt>Trend scale</dt><dd>{previewParams?.trendScale ?? '–'}</dd></div>
+                  <div><dt>Completed cycles</dt><dd>{metrics?.cyclesCompleted ?? 'Unavailable'}</dd></div>
+                </dl>
+              )}
+              <p>{metrics?.valuationNote || 'Fund data is temporarily unavailable.'}</p>
+              <p>The dial previews changes. All investment settings remain bounded by the operator-configured limits.</p>
+              {admin && <a className="k8-immersive-link" href="/k8/login-preview">Preview K8 login</a>}
             </div>
           )}
-          {admin && inviting && <AdminInvitation scope={snapshot?.scope || session.scope} onClose={() => setInviting(false)} />}
-          <p className="k8-footnote">Art changes are previews. Only K8's own account can confirm the wildlife dial. Admin retains full control through the operator dashboard.</p>
         </div>
-      </div>
-    </section>
+      )}
+    </main>
   )
 }
 
