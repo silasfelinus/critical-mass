@@ -37,6 +37,10 @@
   justify-content: flex-start;
 }
 
+.k8-art picture {
+  display: contents;
+}
+
 .k8-art-fallback {
   font-size: clamp(14rem, 44vw, 49rem);
   line-height: 1;
