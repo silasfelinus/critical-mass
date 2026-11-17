@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const express = require('express');
 const { createK8Auth, COOKIE } = require('../src/k8-auth');
-const { paramsForLevel, detectLevel, ordered, visibleConfig } = require('../src/routes/k8-routes');
+const { paramsForLevel, detectLevel, ordered, visibleConfig, readFundMetrics } = require('../src/routes/k8-routes');
 
 const presets = {
   conservative: { kFactor: 0.8, minIntervalMs: 180000, maxIntervalMs: 7200000, entryOffsetBps: 25,
@@ -61,6 +61,22 @@ const withGateway = async run => {
 };
 
 describe('K8 server-side trading risk ladder', () => {
+  it('never calls a tracked position the whole exchange account balance', () => {
+    const status = {
+      market: { lastPrice: 100000, stale: false },
+      position: { totalAsset: 0.005, realizedPnL: 22.2, cyclesCompleted: 4 },
+    };
+    const metrics = readFundMetrics(status, 'BTC-USDC');
+    assert.equal(metrics.positionValueQuote, 500);
+    assert.equal(metrics.accountBalanceQuote, null);
+    assert.equal(metrics.heldAsset, 0.005);
+    assert.equal(metrics.realizedPnlQuote, 22.2);
+    assert.equal(metrics.cyclesCompleted, 4);
+    assert.match(metrics.valuationNote, /not included/i);
+    assert.equal(readFundMetrics({ ...status, market: { lastPrice: 100000, stale: true } }, 'BTC-USDC').positionValueQuote, null);
+    assert.equal(readFundMetrics({ position: {} }, 'BTC-USDC').positionValueQuote, null);
+  });
+
   it('uses exactly the same interpolated parameters as the browser', async () => {
     const ui = await import('../admin/src/components/k8/k8Risk.mjs');
     for (let level = 1; level <= 10; level++) {
