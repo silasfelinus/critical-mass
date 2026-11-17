@@ -227,6 +227,9 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
         if (!LEVEL_KEYS.includes(key) || !Number.isFinite(value)) {
           return failure(res, 400, 'Only valid numeric animal strategy settings can be overridden');
         }
+        if (key !== 'maxDeploymentPercent' && INTEGERS.has(key) && !Number.isInteger(value)) {
+          return failure(res, 400, key + ' must be a whole number');
+        }
         if (key === 'maxDeploymentPercent') {
           if (!Number.isInteger(value) || value < 1 || value > 100) {
             return failure(res, 400, 'Deployment percentage must be a whole number from 1 to 100');
