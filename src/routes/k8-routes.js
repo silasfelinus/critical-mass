@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const { getConfiguredFunds, getFundConfig, getAggressivenessPresets } = require('../config-utils');
 const { buildClientConfig, prepareConfigUpdate, persistConfigUpdate } = require('./config-update');
 const { IPC_CHANNELS } = require('../ipc/ipc-protocol');
+const { computeFundEquity } = require('../risk-manager');
 
 const PARAM_KEYS = Object.freeze([
   'kFactor', 'minIntervalMs', 'maxIntervalMs', 'entryOffsetBps',
@@ -66,7 +67,7 @@ const failure = (res, status, error) => res.status(status).json({ success: false
 
 // An engine position is NOT the entire exchange account. Only expose
 // fund-scoped values known to this specific regime engine.
-function readFundMetrics(status, pair) {
+function readFundMetrics(status, pair, config = {}) {
   const position = status?.position || {};
   const price = status?.market?.lastPrice;
   const held = position.totalAsset;
@@ -79,13 +80,16 @@ function readFundMetrics(status, pair) {
     marketPriceQuote: availablePrice ? price : null,
     positionValueQuote: availablePrice && Number.isFinite(held) && held >= 0
       ? Number((held * price).toFixed(2)) : null,
+    fundEquityQuote: availablePrice && status?.position &&
+      Number.isFinite(config.maxUsdcDeployed) && config.maxUsdcDeployed > 0
+      ? Number(computeFundEquity(position, config, price).equity.toFixed(2)) : null,
     realizedPnlQuote: Number.isFinite(position.realizedPnL)
       ? position.realizedPnL : null,
     cyclesCompleted: Number.isSafeInteger(position.cyclesCompleted)
       ? position.cyclesCompleted : null,
     accountBalanceQuote: null,
     valuationNote: availablePrice
-      ? 'Tracked fund position only. Exchange cash and other holdings are not included.'
+      ? 'Estimated fund equity includes configured capital and tracked fund positions. It is not the exchange account balance.'
       : 'Live fund valuation unavailable. No exchange account balance is provided.',
   };
 }
@@ -123,7 +127,7 @@ function registerK8FundRoutes(routes, { k8Auth, exchangeIPCMap }) {
     };
     return {
       scope, config: visibleConfig(config), presets, status,
-      metrics: readFundMetrics(result.status, scope.pair),
+      metrics: readFundMetrics(result.status, scope.pair, config),
       fingerprint: snapshotFingerprint(config, status, presets),
       savedLevel: detectLevel(config, presets),
       appliedLevel: status.isRunning ? detectLevel(config, presets) : 0,
