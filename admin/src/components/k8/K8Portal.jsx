@@ -301,7 +301,7 @@ function K8Experience({ session, onSignOut }) {
             <span>Saved level</span><strong>{currentName}{Number.isInteger(applied) ? ' · ' + applied : ''}</strong>
           </div>
           <div className="k8-immersive-fact">
-            <span>Tracked position value</span><strong>{money(metrics?.positionValueQuote)}</strong>
+            <span>BTC position value</span><strong>{money(metrics?.positionValueQuote)}</strong>
           </div>
           <div className="k8-immersive-fact">
             <span>{metrics?.asset || 'BTC'} held</span><strong>{holding}</strong>
