@@ -16,6 +16,7 @@ const snapshot = {
     asset: 'BTC',
     heldAsset: 0.005,
     positionValueQuote: 480,
+    fundEquityQuote: 600,
     realizedPnlQuote: 15.35,
     accountBalanceQuote: null,
     cyclesCompleted: 3,
@@ -57,7 +58,7 @@ describe('K8 immersive animal portfolio', () => {
   it('starts on the saved animal and shows an accurately scoped position value', async () => {
     setup('superkate')
     await screen.findByRole('heading', { name: 'K8 THE SLOTH' })
-    expect(await screen.findByText('$480.00')).toBeTruthy()
+    expect(await screen.findByText('$600.00')).toBeTruthy()
     expect(screen.getByText('0.005000 BTC')).toBeTruthy()
     expect(screen.getByText('$15.35')).toBeTruthy()
     expect(screen.getByRole('link', { name: /Critical Mass/i }).getAttribute('href')).toBe('/')
@@ -96,6 +97,8 @@ describe('K8 immersive animal portfolio', () => {
     expect(screen.queryByText('Exchange balance')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: /Settings/ }))
     expect(screen.getByText('Exchange balance')).toBeTruthy()
+    expect(screen.getByText('BTC position value')).toBeTruthy()
+    expect(screen.getByText('$480.00')).toBeTruthy()
     expect(screen.getAllByText('Unavailable').length).toBeGreaterThan(0)
   })
 })
