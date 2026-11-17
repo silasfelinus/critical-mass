@@ -225,7 +225,9 @@ function PositionCard({ position, apy, market, celestial, config, asset, isDryRu
       {apy.engineStartTime && (
         <div className="mt-2 pt-2 border-t border-gray-700 text-xs">
           <div className="flex flex-wrap gap-x-3 gap-y-1 text-gray-400 mb-2">
-            <span>Deposited: ${(apy.depositedCapital || apy.originalCapital || apy.initialCapital)?.toLocaleString()}</span>
+            <span title={isDryRun ? 'Simulated accounting capital. Not evidence of an exchange deposit.' : 'Internal recorded principal; verify deposits against exchange transaction history.'}>
+              {isDryRun ? 'Paper capital' : 'Recorded principal'}: ${(apy.depositedCapital ?? apy.originalCapital ?? apy.initialCapital ?? 0).toLocaleString()}
+            </span>
             <span className="text-green-400">Max: ${(apy.maxUsdcDeployed || apy.currentCapital)?.toLocaleString()}</span>
             <CapitalAdjust apy={apy} exchange={exchange} pairQuery={pairQuery} fetchConfig={fetchConfig} fetchStatus={fetchStatus} addToast={addToast} />
             <span>Running: {apy.elapsedDays?.toFixed(1)}d</span>
